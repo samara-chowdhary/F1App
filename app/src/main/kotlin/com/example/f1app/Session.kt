@@ -3,6 +3,7 @@ package com.example.f1app
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
+//session data set
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Session {
     @JsonProperty("session_key")

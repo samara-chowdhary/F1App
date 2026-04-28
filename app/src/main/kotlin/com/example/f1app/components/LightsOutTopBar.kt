@@ -15,7 +15,6 @@ fun LightsOutTopBar() {
                 color = Color(0xFFE53935), // Your brand red
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
-                font =
             )
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

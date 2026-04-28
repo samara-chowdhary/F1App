@@ -7,9 +7,7 @@ import okhttp3.Request
 import java.io.IOException
 import java.sql.DriverManager
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-class Main(private var context: Context?) {
+class DatabaseImport(private var context: Context?) {
     var dbPath: String = context?.getFilesDir()?.getPath() + "/F1Data.db"
     var DB_URL: String = "jdbc:sqlite:" + dbPath
 

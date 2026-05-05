@@ -67,16 +67,16 @@ fun computeGradient(costX: List<List<Double>>, costY: List<Double>, predictW: Li
 
 //gradient descent calculation
 
-fun gradientDescent(X: List<List<Double>>, y: List<Double>, initialW: List<Double>, initialB: Double, alpha: Double, iterations: Int, m: Int): Pair<List<Double>, Double> {
+fun gradientDescent(X: List<List<Double>>, y: List<Double>, initialW: List<Double>, initialB: Double, alpha: Double, iterations: Int): Pair<List<Double>, Double> {
 
     //mutable versions - so they can be updated
     var w = initialW.toDoubleArray()
     var gradB = initialB
+    val m = X.size
 
     for (iter in 0 until iterations) {
         //calculate the gradient
         val (dj_dw, dj_db) = computeGradient(X, y, w.toList(), gradB, m)
-        val m = X.size.toDouble()
 
         //update all of the weights in w
         for (j in 0 until w.size) {
@@ -85,9 +85,29 @@ fun gradientDescent(X: List<List<Double>>, y: List<Double>, initialW: List<Doubl
 
         //update the bias
         gradB -= (alpha * dj_db)
+
+        // Print progress every 1000 steps
+        if (iter % 1000 == 0) {
+            val cost = computeCost(X, y, w.toList(), gradB)
+            println("Iteration $iter: Cost = $cost")
+        }
     }
 
     return Pair(w.toList(), gradB)
 }
+
+//test
+fun test() {
+    // Data for y = 2x + 1
+    val X = listOf(listOf(1.0), listOf(2.0), listOf(3.0), listOf(4.0))
+    val y = listOf(3.0, 5.0, 7.0, 9.0)
+
+    val (finalW, finalB) = gradientDescent(X, y, listOf(0.0), 0.0, 0.01, 5000)
+
+    println("--- Results ---")
+    println("Final Weight: ${finalW[0]} (Target: 2.0)")
+    println("Final Bias: $finalB (Target: 1.0)")
+}
+
 
 

@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             F1AppTheme {
-                F1AppApp()
+                test()
             }
         }
     }

@@ -1,7 +1,5 @@
 package com.example.f1app
 
-import java.lang.Boolean.FALSE
-import java.lang.Boolean.TRUE
 import kotlin.math.sqrt
 
 //the function for training model
@@ -60,9 +58,9 @@ fun isAnomalous(xTest: DoubleArray, means: DoubleArray, variances: DoubleArray, 
     }
 
     if(pTotal < epsilon){
-        return TRUE //it is an anomaly
+        return true //it is an anomaly
     }
     else{
-        return FALSE //it is normal
+        return false //it is normal
     }
 }

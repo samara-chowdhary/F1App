@@ -1,4 +1,4 @@
-package com.example.f1app
+package com.example.f1app.machineLearning
 
 import kotlin.math.ln
 

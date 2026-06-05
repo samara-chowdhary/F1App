@@ -27,6 +27,8 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.example.f1app.components.LightsOutTopBar
+import com.example.f1app.machineLearning.PredictionRepository
+import com.example.f1app.machineLearning.test
 import com.example.f1app.ui.theme.F1AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,12 +38,26 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val database = F1Database.getInstance(this)
+        val predictionRepo = PredictionRepository(database.driverDao())
+
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val ingestor = DatabaseImport(this as Context?)
+                val ingestor = DatabaseImport(this@MainActivity as Context)
                 ingestor.startImport()
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+            val result = predictionRepo.predictNextPosition(
+                firstName = "Lando",
+                lastName = "Norris",
+                trackLocation = "Monaco"
+            )
+
+            if (result != null) {
+                println("Lando's predicted finishing position is: $result")
+            } else {
+                println("Could not calculate prediction: No historical data found.")
             }
         }
 
@@ -124,5 +140,7 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
+
+
 
 

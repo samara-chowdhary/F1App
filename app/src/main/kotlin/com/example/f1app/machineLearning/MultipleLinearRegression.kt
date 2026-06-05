@@ -1,8 +1,4 @@
-package com.example.f1app
-
-import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
-import kotlinx.serialization.descriptors.PrimitiveKind
+package com.example.f1app.machineLearning
 
 //prediction vals
 val predictX =  listOf<Double>()

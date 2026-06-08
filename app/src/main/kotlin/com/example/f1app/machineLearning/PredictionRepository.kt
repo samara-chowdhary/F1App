@@ -8,15 +8,14 @@ class PredictionRepository(val driverDao: DriverDao) {
     var trainedB: Double = 0.0
     var isModelTrained = false
 
-    //Training the model with data
-    suspend fun trainModelForDriver(firstName: String, lastName: String, trackLocation: String) {
-        val pastPositions = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
+    fun trainModelForDriver(firstName: String, lastName: String, trackLocation: String) {
+        val rawPositions = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
+        val pastPositions = rawPositions.map { it.position }
 
         if (pastPositions.size < 2) return
 
         val costX = mutableListOf<List<Double>>()
         val costY = mutableListOf<Double>()
-
 
         for (i in 1 until pastPositions.size) {
             val historySubset = pastPositions.subList(0, i)
@@ -26,7 +25,7 @@ class PredictionRepository(val driverDao: DriverDao) {
             val bestPos = historySubset.minOrNull()?.toDouble() ?: avgPos
 
             costX.add(listOf(avgPos, lastPos, bestPos))
-            costY.add(pastPositions[i].toDouble()) // Target value to learn against
+            costY.add(pastPositions[i].toDouble())
         }
 
         if (costX.isEmpty()) return
@@ -48,25 +47,36 @@ class PredictionRepository(val driverDao: DriverDao) {
         this.isModelTrained = true
     }
 
-    //Making the prediction
-    suspend fun predictNextPosition(firstName: String, lastName: String, trackLocation: String): Double? {
-        val pastPositions = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
+    fun predictNextPosition(firstName: String, lastName: String, trackLocation: String): Double? {
+        val rawPositions = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
+        val pastPositions = rawPositions.map { it.position }
         if (pastPositions.isEmpty()) return null
 
-        // Training the model if not already
         if (!isModelTrained) {
             trainModelForDriver(firstName, lastName, trackLocation)
         }
 
-        // Feature extraction for the upcoming race prediction
         val currentAvg = pastPositions.average()
         val currentLast = pastPositions.last().toDouble()
         val currentBest = pastPositions.minOrNull()?.toDouble() ?: currentAvg
 
         val predictX = listOf(currentAvg, currentLast, currentBest)
 
-        // Run prediction function
         return predict(predictX, trainedW, trainedB)
     }
-}
 
+    private fun predict(x: List<Double>, w: List<Double>, b: Double): Double {
+        return x.zip(w).sumOf { it.first * it.second } + b
+    }
+
+    private fun gradientDescent(
+        X: List<List<Double>>,
+        y: List<Double>,
+        initialW: List<Double>,
+        initialB: Double,
+        alpha: Double,
+        iterations: Int
+    ): Pair<List<Double>, Double> {
+        return Pair(initialW, initialB)
+    }
+}

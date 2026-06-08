@@ -1,15 +1,11 @@
 package com.example.f1app.databaseEntities
 
-import androidx.room3.Entity
-import androidx.room3.PrimaryKey
+import androidx.room.Entity
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 
-//session data set
-@Entity(tableName = "sessionResults", primaryKeys = ["session_key", "driver_number"])
+@Entity(tableName = "sessionResults", primaryKeys = ["sessionKey", "driverNumber"])
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SessionResult (
-    @PrimaryKey
     val sessionKey: Int = 0,
     val driverNumber: Int = 0,
     val meetingKey: Int = 0,

@@ -1,14 +1,14 @@
 package com.example.f1app.databaseEntities
 
-import androidx.room3.Dao
-import androidx.room3.Insert
-import androidx.room3.OnConflictStrategy
-import androidx.room3.Query
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface SessionDao{
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+interface SessionDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(sessions: List<Session>)
 
     @Query("SELECT * FROM sessions")

@@ -1,22 +1,17 @@
 package com.example.f1app.databaseEntities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 
-// session data set
 @Entity(tableName = "sessions")
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class Session (
+data class Session(
     @PrimaryKey
-    val sessionKey: Int = 0,
-
-    val meetingKey: Int = 0,
-
-    val sessionName: String? = null,
-
-    val sessionType: String? = null,
-
-    val dateStart: String? = null,
+    @ColumnInfo(name = "session_key") val sessionKey: Int = 0,
+    @ColumnInfo(name = "meeting_key") val meetingKey: Int = 0,
+    @ColumnInfo(name = "session_name") val sessionName: String? = null,
+    @ColumnInfo(name = "session_type") val sessionType: String? = null,
+    @ColumnInfo(name = "date_start") val dateStart: String? = null,
 )

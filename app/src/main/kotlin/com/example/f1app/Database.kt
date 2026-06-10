@@ -8,8 +8,11 @@ import com.example.f1app.databaseEntities.Driver
 import com.example.f1app.databaseEntities.DriverDao
 import com.example.f1app.databaseEntities.Session
 import com.example.f1app.databaseEntities.SessionDao
+import com.example.f1app.databaseEntities.SessionResult
+import com.example.f1app.databaseEntities.Meeting
+import com.example.f1app.databaseEntities.Circuit
 
-@Database(entities = [Session::class, Driver::class], version = 2)
+@Database(entities = [Session::class, Driver::class, SessionResult::class, Meeting::class, Circuit::class], version = 2)
 abstract class F1Database : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
     abstract fun driverDao(): DriverDao
@@ -25,7 +28,7 @@ abstract class F1Database : RoomDatabase() {
                     F1Database::class.java,
                     "f1_database"
                 )
-                    .createFromAsset("database/F1 Data.db")
+                    .createFromAsset("database/F1DataFixed.db")
                     .fallbackToDestructiveMigration()
                     .build()
 

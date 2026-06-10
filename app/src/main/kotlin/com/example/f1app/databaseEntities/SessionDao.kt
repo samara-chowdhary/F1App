@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(sessions: List<Session>)
+    suspend fun insertAll(sessions: List<Session>): List<Long>
 
     @Query("SELECT * FROM sessions")
     fun getAllSessions(): Flow<List<Session>>
 
-    @Query("SELECT * FROM sessions WHERE sessionType = :type")
+    @Query("SELECT * FROM sessions WHERE session_type = :type")
     fun getSessionsByType(type: String): Flow<List<Session>>
 }

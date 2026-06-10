@@ -1,5 +1,6 @@
 package com.example.f1app.machineLearning
 
+import android.util.Log
 import com.example.f1app.databaseEntities.DriverDao
 
 class PredictionRepository(val driverDao: DriverDao) {
@@ -8,7 +9,7 @@ class PredictionRepository(val driverDao: DriverDao) {
     var trainedB: Double = 0.0
     var isModelTrained = false
 
-    fun trainModelForDriver(firstName: String, lastName: String, trackLocation: String) {
+    suspend fun trainModelForDriver(firstName: String, lastName: String, trackLocation: String) {
         val rawPositions = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
         val pastPositions = rawPositions.map { it.position }
 
@@ -19,25 +20,20 @@ class PredictionRepository(val driverDao: DriverDao) {
 
         for (i in 1 until pastPositions.size) {
             val historySubset = pastPositions.subList(0, i)
-
             val avgPos = historySubset.average()
             val lastPos = historySubset.last().toDouble()
             val bestPos = historySubset.minOrNull()?.toDouble() ?: avgPos
-
             costX.add(listOf(avgPos, lastPos, bestPos))
             costY.add(pastPositions[i].toDouble())
         }
 
         if (costX.isEmpty()) return
 
-        val initialW = listOf(0.0, 0.0, 0.0)
-        val initialB = 0.0
-
         val (finalW, finalB) = gradientDescent(
             X = costX,
             y = costY,
-            initialW = initialW,
-            initialB = initialB,
+            initialW = listOf(0.0, 0.0, 0.0),
+            initialB = 0.0,
             alpha = 0.01,
             iterations = 5000
         )
@@ -47,22 +43,31 @@ class PredictionRepository(val driverDao: DriverDao) {
         this.isModelTrained = true
     }
 
-    fun predictNextPosition(firstName: String, lastName: String, trackLocation: String): Double? {
-        val rawPositions = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
-        val pastPositions = rawPositions.map { it.position }
-        if (pastPositions.isEmpty()) return null
+    suspend fun predictNextPosition(firstName: String, lastName: String, trackLocation: String): Double? {
+        val recentRaw = driverDao.getRecentPositions(firstName, lastName)
+        val recentPositions = recentRaw.map { it.position }
+
+        val trackRaw = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
+        val trackPositions = trackRaw.map { it.position }
+
+        val combined = recentPositions + trackPositions
+        if (combined.isEmpty()) return null
+
+        Log.d("PREDICTION", "Recent: $recentPositions, Track history: $trackPositions")
+
+        if (combined.size < 4) {
+            return combined.average()
+        }
 
         if (!isModelTrained) {
             trainModelForDriver(firstName, lastName, trackLocation)
         }
 
-        val currentAvg = pastPositions.average()
-        val currentLast = pastPositions.last().toDouble()
-        val currentBest = pastPositions.minOrNull()?.toDouble() ?: currentAvg
+        val currentAvg = recentPositions.average()
+        val currentLast = recentPositions.firstOrNull()?.toDouble() ?: currentAvg
+        val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else currentAvg
 
-        val predictX = listOf(currentAvg, currentLast, currentBest)
-
-        return predict(predictX, trainedW, trainedB)
+        return predict(listOf(currentAvg, currentLast, trackAvg), trainedW, trainedB)
     }
 
     private fun predict(x: List<Double>, w: List<Double>, b: Double): Double {
@@ -77,6 +82,30 @@ class PredictionRepository(val driverDao: DriverDao) {
         alpha: Double,
         iterations: Int
     ): Pair<List<Double>, Double> {
-        return Pair(initialW, initialB)
+        var w = initialW.toMutableList()
+        var b = initialB
+        val m = X.size
+        val n = w.size
+
+        repeat(iterations) {
+            val dw = MutableList(n) { 0.0 }
+            var db = 0.0
+
+            for (i in 0 until m) {
+                val prediction = predict(X[i], w, b)
+                val error = prediction - y[i]
+                for (j in 0 until n) {
+                    dw[j] += error * X[i][j]
+                }
+                db += error
+            }
+
+            for (j in 0 until n) {
+                w[j] -= alpha * dw[j] / m
+            }
+            b -= alpha * db / m
+        }
+
+        return Pair(w, b)
     }
 }

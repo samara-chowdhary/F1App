@@ -2,6 +2,7 @@ package com.example.f1app
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -48,6 +49,10 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+
+            val rawPositions = database.driverDao().getHistoricalPositions("Lando", "Norris", "%Monaco%")
+            Log.d("PREDICTION", "Found ${rawPositions.size} historical positions: $rawPositions")
+
             val result = predictionRepo.predictNextPosition(
                 firstName = "Lando",
                 lastName = "Norris",
@@ -55,15 +60,16 @@ class MainActivity : ComponentActivity() {
             )
 
             if (result != null) {
-                println("Lando's predicted finishing position is: $result")
+                val rounded = Math.round(result).toInt()
+                Log.d("PREDICTION", "Predicted position: $rounded")
             } else {
-                println("Could not calculate prediction: No historical data found.")
+                Log.d("PREDICTION","Could not calculate prediction: No historical data found.")
             }
         }
 
         setContent {
             F1AppTheme {
-                test()
+                F1AppApp()
             }
         }
     }

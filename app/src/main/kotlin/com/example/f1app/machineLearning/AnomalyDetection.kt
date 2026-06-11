@@ -32,7 +32,7 @@ fun trainModel(trainingData: List<List<Double>>, m: Int, n: Int): Pair<DoubleArr
     return Pair(means, variances)
 }
 
-//anomally detection function
+//anomaly detection function
 
 val xTest = DoubleArray(n)
 val means = DoubleArray(n)

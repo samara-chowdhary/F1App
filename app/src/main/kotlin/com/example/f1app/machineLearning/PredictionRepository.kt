@@ -10,21 +10,21 @@ class PredictionRepository(val driverDao: DriverDao) {
     var isModelTrained = false
 
     suspend fun trainModelForDriver(firstName: String, lastName: String, trackLocation: String) {
-        val rawPositions = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
-        val pastPositions = rawPositions.map { it.position }
+        val recentRaw = driverDao.getRecentPositions(firstName, lastName)
+        val recentPositions = recentRaw.map { it.position }
 
-        if (pastPositions.size < 2) return
+        if (recentPositions.size < 2) return
 
         val costX = mutableListOf<List<Double>>()
         val costY = mutableListOf<Double>()
 
-        for (i in 1 until pastPositions.size) {
-            val historySubset = pastPositions.subList(0, i)
+        for (i in 1 until recentPositions.size) {
+            val historySubset = recentPositions.subList(0, i)
             val avgPos = historySubset.average()
             val lastPos = historySubset.last().toDouble()
             val bestPos = historySubset.minOrNull()?.toDouble() ?: avgPos
             costX.add(listOf(avgPos, lastPos, bestPos))
-            costY.add(pastPositions[i].toDouble())
+            costY.add(recentPositions[i].toDouble())
         }
 
         if (costX.isEmpty()) return
@@ -34,7 +34,7 @@ class PredictionRepository(val driverDao: DriverDao) {
             y = costY,
             initialW = listOf(0.0, 0.0, 0.0),
             initialB = 0.0,
-            alpha = 0.01,
+            alpha = 0.001,
             iterations = 5000
         )
 
@@ -45,29 +45,27 @@ class PredictionRepository(val driverDao: DriverDao) {
 
     suspend fun predictNextPosition(firstName: String, lastName: String, trackLocation: String): Double? {
         val recentRaw = driverDao.getRecentPositions(firstName, lastName)
-        val recentPositions = recentRaw.map { it.position }
+        val recentPositions = removeAnomalies(recentRaw.map { it.position })
 
         val trackRaw = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
-        val trackPositions = trackRaw.map { it.position }
+        val trackPositions = removeAnomalies(trackRaw.map { it.position })
 
-        val combined = recentPositions + trackPositions
-        if (combined.isEmpty()) return null
+        if (recentPositions.isEmpty() && trackPositions.isEmpty()) return null
 
         Log.d("PREDICTION", "Recent: $recentPositions, Track history: $trackPositions")
+        Log.d("PREDICTION", "After anomaly detection - Recent: $recentPositions, Track: $trackPositions")
 
-        if (combined.size < 4) {
-            return combined.average()
+        // weight recent form at 70%, track history at 30%
+        val recentAvg = if (recentPositions.isNotEmpty()) recentPositions.average() else null
+        val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else null
+
+        val prediction = when {
+            recentAvg != null && trackAvg != null -> (recentAvg * 0.7) + (trackAvg * 0.3)
+            recentAvg != null -> recentAvg
+            else -> trackAvg!!
         }
 
-        if (!isModelTrained) {
-            trainModelForDriver(firstName, lastName, trackLocation)
-        }
-
-        val currentAvg = recentPositions.average()
-        val currentLast = recentPositions.firstOrNull()?.toDouble() ?: currentAvg
-        val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else currentAvg
-
-        return predict(listOf(currentAvg, currentLast, trackAvg), trainedW, trainedB)
+        return prediction.coerceIn(1.0, 20.0)
     }
 
     private fun predict(x: List<Double>, w: List<Double>, b: Double): Double {
@@ -107,5 +105,26 @@ class PredictionRepository(val driverDao: DriverDao) {
         }
 
         return Pair(w, b)
+    }
+
+    private fun removeAnomalies(positions: List<Int>): List<Int> {
+        if (positions.size < 4) return positions
+
+        val trainingData = positions.map { listOf(it.toDouble()) }
+        val m = trainingData.size
+        val n = 1
+
+        val (means, variances) = trainModel(trainingData, m, n)
+
+        val epsilon = 0.05
+
+        val filtered = positions.filter { pos ->
+            val xTest = doubleArrayOf(pos.toDouble())
+            !isAnomalous(xTest, means, variances, n, epsilon)
+        }
+
+        Log.d("PREDICTION", "Anomaly detection: $positions -> $filtered")
+
+        return if (filtered.size < 2) positions else filtered
     }
 }

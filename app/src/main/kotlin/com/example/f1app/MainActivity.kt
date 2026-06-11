@@ -50,13 +50,13 @@ class MainActivity : ComponentActivity() {
                 e.printStackTrace()
             }
 
-            val rawPositions = database.driverDao().getHistoricalPositions("Lando", "Norris", "%Monaco%")
+            val rawPositions = database.driverDao().getHistoricalPositions("Charles", "Leclerc", "%Barcelona%")
             Log.d("PREDICTION", "Found ${rawPositions.size} historical positions: $rawPositions")
 
             val result = predictionRepo.predictNextPosition(
-                firstName = "Lando",
-                lastName = "Norris",
-                trackLocation = "Monaco"
+                firstName = "Charles",
+                lastName = "Leclerc",
+                trackLocation = "Barcelona"
             )
 
             if (result != null) {

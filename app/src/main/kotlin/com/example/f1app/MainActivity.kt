@@ -27,9 +27,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.f1app.components.LightsOutTopBar
 import com.example.f1app.machineLearning.PredictionRepository
 import com.example.f1app.machineLearning.test
+import com.example.f1app.screens.AustraliaScreen
+import com.example.f1app.screens.RacesScreen
 import com.example.f1app.ui.theme.F1AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -79,8 +84,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun F1AppApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+    val navController = rememberNavController()
 
-    //nav bar build
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
@@ -92,45 +97,58 @@ fun F1AppApp() {
                     },
                     label = { Text(it.label) },
                     selected = it == currentDestination,
-                    onClick = { currentDestination = it }
+                    onClick = {
+                        currentDestination = it
+                        navController.navigate(it.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
                 )
             }
         }
     ) {
-        //nav and top bar
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = { LightsOutTopBar() }
         ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = AppDestinations.HOME.route,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable(AppDestinations.HOME.route) { Text("Home Screen Content") }
+                composable(AppDestinations.RESULTS.route) { Text("Results Screen Content") }
+                composable(AppDestinations.DRIVERS.route) { Text("Drivers Screen Content") }
+                composable(AppDestinations.RACES.route) {
+                    RacesScreen(onCardClick = { route ->
+                        navController.navigate(route)
+                    })
+                }
+                composable(AppDestinations.CHAMPIONSHIPS.route) { Text("Championships Screen Content") }
 
-            Column(modifier = Modifier.padding(innerPadding)) {
-                when (currentDestination) {
-                    AppDestinations.HOME -> Text("Home Screen Content")
-                    AppDestinations.RESULTS -> Text("Results Screen Content")
-                    AppDestinations.DRIVERS -> Text("Drivers Screen Content")
-                    AppDestinations.RACES -> Text("Races Screen Content")
-                    AppDestinations.CHAMPIONSHIPS -> Text("Championships Screen Content")
-
+                // race detail screens
+                composable("australia") {
+                    AustraliaScreen(onBack = { navController.popBackStack() })
                 }
             }
         }
     }
 }
 
-//nav bar icons
 enum class AppDestinations(
     val label: String,
     val icon: Int,
+    val route: String
 ) {
-    DRIVERS("Drivers", R.drawable.ic_account_box),
-    RESULTS("Results", R.drawable.ic_flag),
-    HOME("Home", R.drawable.ic_home),
-    RACES("Races", R.drawable.ic_calendar),
-    CHAMPIONSHIPS("Champs", R.drawable.ic_trophy)
+    DRIVERS("Drivers", R.drawable.ic_account_box, "drivers"),
+    RESULTS("Results", R.drawable.ic_flag, "results"),
+    HOME("Home", R.drawable.ic_home, "home"),
+    RACES("Races", R.drawable.ic_calendar, "races"),
+    CHAMPIONSHIPS("Champs", R.drawable.ic_trophy, "championships")
 }
 
-
-//greetings
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -146,7 +164,3 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
-
-
-
-

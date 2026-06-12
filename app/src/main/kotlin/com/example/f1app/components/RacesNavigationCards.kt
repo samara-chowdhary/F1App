@@ -1,6 +1,7 @@
 package com.example.f1app.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,19 +23,20 @@ data class RaceData(
     val month: String,
     val countryName: String,
     val flagDrawableId: Int,
-    val screenKey: String // Tells the app which page to open when clicked
+    val screenKey: String
 )
 
 @Composable
-fun RacePredictionCard(
+fun RaceNavigationCard(
     dateRange: String,
     month: String,
     countryName: String,
     flagDrawableId: Int,
-    route: String,                 // <-- New: The target destination layout name
-    onButtonClick: (String) -> Unit // <-- Updated: Now passes the string route name when clicked
+    route: String,
+    onButtonClick: (String) -> Unit
 ) {
     Card(
+        onClick = { onButtonClick(route) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
@@ -66,6 +68,8 @@ fun RacePredictionCard(
                         Text(text = month, color = Color.LightGray, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
 
+                    Spacer(modifier = Modifier.width(87.dp))
+
                     Image(
                         painter = painterResource(id = flagDrawableId),
                         contentDescription = "$countryName Flag",
@@ -84,11 +88,10 @@ fun RacePredictionCard(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Button(
-                    onClick = { onButtonClick(route) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE10600)),
-                    shape = RoundedCornerShape(50),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp)
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFE10600), shape = RoundedCornerShape(50))
+                        .padding(horizontal = 24.dp, vertical = 8.dp)
                 ) {
                     Text(text = "View Predictions", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }

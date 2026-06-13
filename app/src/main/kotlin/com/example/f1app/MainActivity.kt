@@ -183,9 +183,6 @@ fun F1AppApp() {
                 composable("emilia_romagna") {
                     EmiliaRomagnaScreen(onBack = { navController.popBackStack() })
                 }
-                composable("britain") {
-                    BritianScreen(onBack = { navController.popBackStack() })
-                }
                 composable("hungary") {
                     HungaryScreen(onBack = { navController.popBackStack() })
                 }

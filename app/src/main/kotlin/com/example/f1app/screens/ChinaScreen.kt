@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import com.example.f1app.ui.theme.F1Font
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChinaScreen(onBack: () -> Unit) {
@@ -26,6 +26,7 @@ fun ChinaScreen(onBack: () -> Unit) {
                         text = "Chinese GP Predictions",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
+                        fontFamily = F1Font,
                         fontSize = 20.sp
                     )
                 },
@@ -59,6 +60,7 @@ fun ChinaScreen(onBack: () -> Unit) {
                 text = "Shanghai International Circuit",
                 color = Color(0xFFE10600),
                 fontSize = 24.sp,
+                fontFamily = F1Font,
                 fontWeight = FontWeight.Bold
             )
 

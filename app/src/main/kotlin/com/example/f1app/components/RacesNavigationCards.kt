@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.f1app.ui.theme.F1Font
 
 data class RaceData(
     val dateRange: String,
@@ -61,14 +62,18 @@ fun RaceNavigationCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = dateRange, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = dateRange,
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = F1Font)
                         Text(text = month, color = Color.LightGray, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
-
-                    Spacer(modifier = Modifier.width(87.dp))
 
                     Image(
                         painter = painterResource(id = flagDrawableId),
@@ -76,7 +81,6 @@ fun RaceNavigationCard(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .weight(2f, fill = false)
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -84,7 +88,12 @@ fun RaceNavigationCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(text = countryName, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = countryName,
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = F1Font)
 
                 Spacer(modifier = Modifier.height(12.dp))
 

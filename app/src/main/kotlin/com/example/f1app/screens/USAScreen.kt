@@ -17,13 +17,13 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LasVegasScreen(onBack: () -> Unit) {
+fun USAScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Las Vegas GP Predictions",
+                        text = "United States GP Predictions",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
@@ -56,7 +56,7 @@ fun LasVegasScreen(onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Las Vegas Strip Circuit",
+                text = "Circuit of the Americas",
                 color = Color(0xFFE10600),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
@@ -74,5 +74,7 @@ fun LasVegasScreen(onBack: () -> Unit) {
         }
     }
 }
+
+
 
 

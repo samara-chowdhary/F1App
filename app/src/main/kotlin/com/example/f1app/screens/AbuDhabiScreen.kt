@@ -23,7 +23,7 @@ fun AbuDhabiScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Abu Dhabi Predictions",
+                        text = "Abu Dhabi GP Predictions",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
@@ -39,7 +39,7 @@ fun AbuDhabiScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF111111) // Matches your card color
+                    containerColor = Color(0xFF111111)
                 )
             )
         }
@@ -48,7 +48,7 @@ fun AbuDhabiScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color.Black) // Dark mode background
+                .background(Color.Black)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally

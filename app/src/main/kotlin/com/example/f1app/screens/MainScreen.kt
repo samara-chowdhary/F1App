@@ -12,7 +12,6 @@ fun MainScreen() {
     Scaffold(
         topBar = { LightsOutTopBar() }
     ) { innerPadding ->
-        // Your main content (like the race cards in your screenshot) goes here
         Column(modifier = Modifier.padding(innerPadding)) {
             // Content...
         }

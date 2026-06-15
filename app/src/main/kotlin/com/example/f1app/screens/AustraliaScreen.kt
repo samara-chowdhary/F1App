@@ -8,17 +8,34 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.f1app.F1Database
+import com.example.f1app.RaceViewModel
+import com.example.f1app.RaceViewModelFactory
+import com.example.f1app.components.StandingsDropDownBox
 import com.example.f1app.ui.theme.F1Font
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AustraliaScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val viewModel: RaceViewModel = viewModel(
+        factory = RaceViewModelFactory(
+            database = F1Database.getInstance(context),
+            trackLocation = "Melbourne"
+        )
+    )
+    val state by viewModel.state.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -35,7 +52,7 @@ fun AustraliaScreen(onBack: () -> Unit) {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back to Dashboard",
+                            contentDescription = "Back",
                             tint = Color.White
                         )
                     }
@@ -51,7 +68,6 @@ fun AustraliaScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color.Black)
-                .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -67,13 +83,19 @@ fun AustraliaScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Your prediction configurations, stats, or voting inputs will go right here!",
-                color = Color.LightGray,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            if (state.isLoading) {
+                CircularProgressIndicator(
+                    color = Color(0xFFE10600),
+                    modifier = Modifier.padding(32.dp)
+                )
+            } else {
+                StandingsDropDownBox(
+                    title = "Predicted Positions",
+                    drivers = state.drivers
+                )
+            }
 
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

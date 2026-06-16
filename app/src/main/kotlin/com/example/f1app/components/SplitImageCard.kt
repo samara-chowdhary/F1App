@@ -23,7 +23,7 @@ fun SplitImageCard(
     title: String,
     imageDrawableId: Int,
     backgroundColor: Color = Color(0xFF111111),
-    buttonColor: Color = Color(0xFFE10600),
+    buttonColor: Color = Color(0xFFFF1111),
     buttonTextColor: Color = Color.White,
     onCardClick: () -> Unit
 ) {
@@ -33,28 +33,27 @@ fun SplitImageCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF111111))
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Image(
                 painter = painterResource(imageDrawableId),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(150.dp)
             )
-            Column(
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(backgroundColor)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(16.dp)
             ) {
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = title,
@@ -63,26 +62,30 @@ fun SplitImageCard(
                         fontWeight = FontWeight.Bold,
                         fontFamily = F1Font
                     )
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .background(buttonColor, shape = RoundedCornerShape(50))
+                            .padding(horizontal = 24.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "View Predictions",
+                            color = buttonTextColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            fontFamily = F1Font
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .background(buttonColor, shape = RoundedCornerShape(50))
-                        .padding(horizontal = 24.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = "View Predictions",
-                        color = buttonTextColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        fontFamily = F1Font
-                    )
-                }
+
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                )
             }
         }
     }

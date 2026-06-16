@@ -34,7 +34,9 @@ fun RaceNavigationCard(
     countryName: String,
     flagDrawableId: Int,
     route: String,
-    onButtonClick: (String) -> Unit
+    onButtonClick: (String) -> Unit,
+    backgroundColor: Color = Color(0xFF111111),
+    buttonColor: Color = Color(0xFFFF1111)
 ) {
     Card(
         onClick = { onButtonClick(route) },
@@ -42,7 +44,7 @@ fun RaceNavigationCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF111111))
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
         Box(
             modifier = Modifier
@@ -71,8 +73,13 @@ fun RaceNavigationCard(
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
+                            fontFamily = F1Font
+                        )
+                        Text(text = month,
+                            color = Color.LightGray,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
                             fontFamily = F1Font)
-                        Text(text = month, color = Color.LightGray, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
 
                     Image(
@@ -93,16 +100,23 @@ fun RaceNavigationCard(
                     color = Color.White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = F1Font)
+                    fontFamily = F1Font
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFFE10600), shape = RoundedCornerShape(50))
+                        .background(buttonColor, shape = RoundedCornerShape(50))
                         .padding(horizontal = 24.dp, vertical = 8.dp)
                 ) {
-                    Text(text = "View Predictions", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        text = "View Predictions",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        fontFamily = F1Font
+                    )
                 }
             }
         }

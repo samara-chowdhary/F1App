@@ -38,7 +38,7 @@ fun StandingsDropDownBox(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF111111))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFF1111))
     ) {
         Column {
             // Header
@@ -48,7 +48,7 @@ fun StandingsDropDownBox(
                     .clickable { expanded = !expanded }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = title,
@@ -81,7 +81,6 @@ fun StandingsDropDownBox(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Position number
                                 Text(
                                     text = "${driver.position}",
                                     color = Color(0xFFE10600),
@@ -108,7 +107,6 @@ fun StandingsDropDownBox(
                                 }
                             }
 
-                            // Value on the right
                             Text(
                                 text = driver.value,
                                 color = Color.White,
@@ -118,7 +116,6 @@ fun StandingsDropDownBox(
                             )
                         }
 
-                        // Divider between rows
                         HorizontalDivider(color = Color(0xFF222222), thickness = 1.dp)
                     }
                 }

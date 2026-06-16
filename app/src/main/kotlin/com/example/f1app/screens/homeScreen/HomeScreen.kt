@@ -35,22 +35,24 @@ fun HomeScreen(
             countryName = "Australia",
             flagDrawableId = R.drawable.flag_australia,
             route = "australia",
-            onButtonClick = { onNextRaceClick() }
+            onButtonClick = { onNextRaceClick() },
+            backgroundColor = Color.Red,
+            buttonColor = Color.Black
         )
 
         SplitImageCard(
             title = "Races",
             imageDrawableId = R.drawable.img_cars,
-            backgroundColor = Color(0xFF111111),
-            buttonColor = Color(0xFFE10600),
+            backgroundColor = Color.Black,
+            buttonColor = Color.Red,
             onCardClick = onRacesClick
         )
 
         SplitImageCard(
             title = "Drivers",
             imageDrawableId = R.drawable.img_drivers,
-            backgroundColor = Color(0xFFE10600),
-            buttonColor = Color.Black,
+            backgroundColor = Color.Black,
+            buttonColor = Color.Red,
             onCardClick = onDriversClick
         )
 

@@ -35,6 +35,7 @@ class RaceViewModel(
 
             drivers.forEach { driver ->
                 if (driver.firstName != null && driver.lastName != null) {
+                    val team = database.driverDao().getLatestTeamForDriver(driver.driverNumber) ?: "Unknown"
                     val prediction = predictionRepo.predictNextPosition(
                         firstName = driver.firstName,
                         lastName = driver.lastName,
@@ -46,7 +47,7 @@ class RaceViewModel(
                                 position = 0,
                                 firstName = driver.firstName,
                                 lastName = driver.lastName,
-                                team = "Unknown",
+                                team = team,
                                 value = "P${Math.round(prediction)}"
                             )
                         )

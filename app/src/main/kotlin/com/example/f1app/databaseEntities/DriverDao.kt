@@ -30,7 +30,7 @@ interface DriverDao {
 
     @Query("""
         SELECT sr.position AS position
-        FROM SESSION_RESULT AS sr
+        FROM session_result AS sr
         INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
         INNER JOIN sessions AS s ON sr.session_key = s.session_key
         INNER JOIN MEETINGS AS m ON s.meeting_key = m.meeting_key
@@ -41,6 +41,16 @@ interface DriverDao {
         LIMIT 5
         """)
     suspend fun getRecentPositions(firstName: String, lastName: String): List<DriverPosition>
+
+    @Query("""
+    SELECT dp.teamName FROM DRIVER_PARTICIPATION dp
+    WHERE dp.driverNumber = :driverNumber
+    ORDER BY dp.sessionKey DESC
+    LIMIT 1
+""")
+    suspend fun getLatestTeamForDriver(driverNumber: Int): String?
+
+
 }
 
 data class DriverPosition(

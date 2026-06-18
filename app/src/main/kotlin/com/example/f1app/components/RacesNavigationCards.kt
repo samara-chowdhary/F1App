@@ -24,7 +24,9 @@ data class RaceData(
     val month: String,
     val countryName: String,
     val flagDrawableId: Int,
-    val screenKey: String
+    val screenKey: String,
+    val circuitName: String,
+    val trackLocation: String
 )
 
 @Composable

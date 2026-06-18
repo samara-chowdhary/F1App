@@ -16,5 +16,5 @@ data class SessionResult(
     val duration: Double = 0.0,
     @ColumnInfo(name = "gap_to_leader") val gapToLeader: Double = 0.0,
     @ColumnInfo(name = "number_of_laps") val numberOfLaps: Int = 0,
-    val position: Int = 0
+    val position: Int = 0,
 )

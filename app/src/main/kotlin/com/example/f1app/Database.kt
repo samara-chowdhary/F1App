@@ -11,11 +11,17 @@ import com.example.f1app.databaseEntities.SessionDao
 import com.example.f1app.databaseEntities.SessionResult
 import com.example.f1app.databaseEntities.Meeting
 import com.example.f1app.databaseEntities.Circuit
+import com.example.f1app.databaseEntities.DriverParticipation
+import com.example.f1app.databaseEntities.DriverParticipationDao
+import com.example.f1app.databaseEntities.MeetingDao
 
-@Database(entities = [Session::class, Driver::class, SessionResult::class, Meeting::class, Circuit::class], version = 2)
+@Database(entities = [Session::class, Driver::class, SessionResult::class, Meeting::class, Circuit::class, DriverParticipation:: class], version = 2)
 abstract class F1Database : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
     abstract fun driverDao(): DriverDao
+    abstract fun meetingDao(): MeetingDao
+
+    abstract fun driverParticipationDao(): DriverParticipationDao
 
     companion object {
         @Volatile

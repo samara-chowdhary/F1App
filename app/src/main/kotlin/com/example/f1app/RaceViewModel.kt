@@ -29,7 +29,7 @@ class RaceViewModel(
     private fun loadPredictions() {
         viewModelScope.launch {
             val predictionRepo = PredictionRepository(database.driverDao())
-            val drivers = database.driverDao().getAllDrivers()
+            val drivers = database.driverDao().getCurrentDrivers()
 
             val predictions = mutableListOf<DriverStandingRow>()
 

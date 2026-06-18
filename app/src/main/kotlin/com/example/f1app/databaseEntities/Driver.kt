@@ -11,5 +11,7 @@ data class Driver(
     @PrimaryKey
     @ColumnInfo(name = "driver_number") val driverNumber: Int = 0,
     @ColumnInfo(name = "first_name") val firstName: String? = null,
-    @ColumnInfo(name = "last_name") val lastName: String? = null
+    @ColumnInfo(name = "last_name") val lastName: String? = null,
+    @ColumnInfo(name = "session_key") val sessionKey: Int? = null,
+    @ColumnInfo(name = "team_name") val teamName: String? = null
 )

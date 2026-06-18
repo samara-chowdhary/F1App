@@ -43,14 +43,24 @@ interface DriverDao {
     suspend fun getRecentPositions(firstName: String, lastName: String): List<DriverPosition>
 
     @Query("""
-    SELECT dp.teamName FROM DRIVER_PARTICIPATION dp
-    WHERE dp.driverNumber = :driverNumber
-    ORDER BY dp.sessionKey DESC
+    SELECT dp.team_name FROM DRIVER_PARTICIPATION dp
+    WHERE dp.driver_number = :driverNumber
+    AND dp.team_name IS NOT NULL
+    ORDER BY dp.session_key DESC
     LIMIT 1
 """)
     suspend fun getLatestTeamForDriver(driverNumber: Int): String?
 
 
+    @Query("""
+    SELECT DISTINCT d.* FROM drivers d
+    INNER JOIN DRIVER_PARTICIPATION dp ON d.driver_number = dp.driver_number
+    INNER JOIN sessions s ON dp.session_key = s.session_key
+    INNER JOIN MEETINGS m ON s.meeting_key = m.meeting_key
+    WHERE s.session_type = 'Race'
+    AND m.year = 2026
+""")
+    suspend fun getCurrentDrivers(): List<Driver>
 }
 
 data class DriverPosition(

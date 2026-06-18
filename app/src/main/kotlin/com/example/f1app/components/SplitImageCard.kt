@@ -42,7 +42,7 @@ fun SplitImageCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(180.dp)
             )
 
             Box(

@@ -18,16 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.f1app.ui.theme.F1Font
 
-data class DriverStandingRow(
-    val position: Int,
+data class DriverDNFRow(
     val firstName: String,
     val lastName: String,
     val team: String,
-    val value: String
+    val dnfRisk: Double
 )
 
 @Composable
-fun StandingsDropDownBox(
+fun DNFDropDownBox(
     title: String,
     drivers: List<DriverStandingRow>
 ) {
@@ -100,21 +99,16 @@ fun StandingsDropDownBox(
                             }
 
                             Text(
-                                text = "P${driver.position}",
-                                color = Color(0xFFE10600),
+                                text = "${"%.1f".format(driver.dnfRisk)}%",
+                                color = when {
+                                    driver.dnfRisk >= 60 -> Color.Red
+                                    driver.dnfRisk >= 30 -> Color(0xFFFFA500)   // Orange
+                                    else -> Color(0xFF00C853)                   // Green
+                                },
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
-                                fontFamily = F1Font,
-                                modifier = Modifier.width(32.dp)
+                                fontFamily = F1Font
                             )
-
-                            //Text(
-                                //text = driver.value,
-                                //color = Color.White,
-                                //fontWeight = FontWeight.Bold,
-                                //fontSize = 14.sp,
-                                //fontFamily = F1Font
-                            //)
                         }
 
                         HorizontalDivider(color = Color(0xFF222222), thickness = 1.dp)

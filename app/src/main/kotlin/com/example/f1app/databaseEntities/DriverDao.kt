@@ -61,6 +61,27 @@ interface DriverDao {
     AND m.year = 2026
 """)
     suspend fun getCurrentDrivers(): List<Driver>
+
+    data class DriverDNF(
+
+        val dnf: Boolean
+
+    )
+
+    @Query("""
+    SELECT sr.dnf AS dnf
+    FROM SESSION_RESULT sr
+    INNER JOIN drivers d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions s ON sr.session_key = s.session_key
+    WHERE d.first_name = :firstName
+      AND d.last_name = :lastName
+      AND s.session_type = 'Race'
+    ORDER BY s.date_start DESC
+    LIMIT 10
+""")
+    suspend fun getRecentDNFs(firstName: String, lastName: String): List<DnfResult>
+
+    data class DnfResult(val dnf: Boolean)
 }
 
 data class DriverPosition(

@@ -18,13 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.f1app.ui.theme.F1Font
 
-data class DriverDNFRow(
-    val firstName: String,
-    val lastName: String,
-    val team: String,
-    val dnfRisk: Double
-)
-
 @Composable
 fun DNFDropDownBox(
     title: String,
@@ -37,7 +30,7 @@ fun DNFDropDownBox(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFF1111))
+        colors = CardDefaults.cardColors(containerColor = Color.Red)
     ) {
         Column {
             // Header
@@ -54,7 +47,7 @@ fun DNFDropDownBox(
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    fontFamily = F1Font
+                    fontFamily = F1Font,
                 )
                 Icon(
                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp
@@ -79,31 +72,28 @@ fun DNFDropDownBox(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-
-                                Column {
-                                    Text(
-                                        text = "${driver.firstName} ${driver.lastName}",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        fontFamily = F1Font,
-                                    )
-                                    Text(
-                                        text = driver.team,
-                                        color = Color.LightGray,
-                                        fontSize = 12.sp,
-                                        fontFamily = F1Font
-                                    )
-                                }
+                            Column {
+                                Text(
+                                    text = "${driver.firstName} ${driver.lastName}",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    fontFamily = F1Font,
+                                )
+                                Text(
+                                    text = driver.team,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp,
+                                    fontFamily = F1Font
+                                )
                             }
 
                             Text(
-                                text = "${"%.1f".format(driver.dnfRisk)}%",
-                                color = when {
-                                    driver.dnfRisk >= 60 -> Color.Red
-                                    driver.dnfRisk >= 30 -> Color(0xFFFFA500)   // Orange
-                                    else -> Color(0xFF00C853)                   // Green
+                                text = driver.value,
+                                color = when (driver.value) {
+                                    "High" -> Color.Red
+                                    "Medium" -> Color(0xFFFFA500)
+                                    else -> Color(0xFF00C853)
                                 },
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,

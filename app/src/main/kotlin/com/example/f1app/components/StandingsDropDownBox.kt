@@ -105,16 +105,8 @@ fun StandingsDropDownBox(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 fontFamily = F1Font,
-                                modifier = Modifier.width(32.dp)
+                                modifier = Modifier.width(40.dp),
                             )
-
-                            //Text(
-                                //text = driver.value,
-                                //color = Color.White,
-                                //fontWeight = FontWeight.Bold,
-                                //fontSize = 14.sp,
-                                //fontFamily = F1Font
-                            //)
                         }
 
                         HorizontalDivider(color = Color(0xFF222222), thickness = 1.dp)

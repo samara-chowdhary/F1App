@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.f1app.F1Database
 import com.example.f1app.RaceViewModel
 import com.example.f1app.RaceViewModelFactory
+import com.example.f1app.components.DNFDropDownBox
 import com.example.f1app.components.StandingsDropDownBox
 import com.example.f1app.ui.theme.F1Font
 
@@ -90,18 +91,20 @@ fun IndividualRaceScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             if (state.isLoading) {
-                CircularProgressIndicator(
-                    color = Color(0xFFE10600),
-                    modifier = Modifier.padding(32.dp)
-                )
+                CircularProgressIndicator(color = Color(0xFFE10600), modifier = Modifier.padding(32.dp))
             } else {
                 StandingsDropDownBox(
                     title = "Predicted Positions",
                     drivers = state.drivers
                 )
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DNFDropDownBox(
+                    title = "DNF Risk",
+                    drivers = state.dnfRisks
+                )
+            }
     }
+}
 }

@@ -43,19 +43,24 @@ class PredictionRepository(val driverDao: DriverDao) {
         this.isModelTrained = true
     }
 
-    suspend fun predictNextPosition(firstName: String, lastName: String, trackLocation: String): Double? {
-        val recentRaw = driverDao.getRecentPositions(firstName, lastName)
-        val recentPositions = removeAnomalies(recentRaw.map { it.position })
+    suspend fun predictNextPosition(
+        firstName: String,
+        lastName: String,
+        trackLocation: String,
+        isWetRace: Boolean = false
+    ): Double? {
+        val recentRaw = if (isWetRace) {
+            driverDao.getWetRacePositions(firstName, lastName)
+        } else {
+            driverDao.getRecentPositions(firstName, lastName)
+        }
+        val recentPositions = recentRaw.map { it.position }
 
         val trackRaw = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
-        val trackPositions = removeAnomalies(trackRaw.map { it.position })
+        val trackPositions = trackRaw.map { it.position }
 
         if (recentPositions.isEmpty() && trackPositions.isEmpty()) return null
 
-        Log.d("PREDICTION", "Recent: $recentPositions, Track history: $trackPositions")
-        Log.d("PREDICTION", "After anomaly detection - Recent: $recentPositions, Track: $trackPositions")
-
-        // weight recent form at 70%, track history at 30%
         val recentAvg = if (recentPositions.isNotEmpty()) recentPositions.average() else null
         val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else null
 
@@ -115,7 +120,6 @@ class PredictionRepository(val driverDao: DriverDao) {
         val n = 1
 
         val (means, variances) = trainModel(trainingData, m, n)
-
         val epsilon = 0.05
 
         val filtered = positions.filter { pos ->

@@ -62,7 +62,7 @@ interface DriverDao {
 """)
     suspend fun getCurrentDrivers(): List<Driver>
 
-    data class DriverDNF(
+    data class DnfResult(
 
         val dnf: Boolean
 
@@ -81,9 +81,59 @@ interface DriverDao {
 """)
     suspend fun getRecentDNFs(firstName: String, lastName: String): List<DnfResult>
 
-    data class DnfResult(val dnf: Boolean)
-}
+    @Query("""
+    SELECT sr.position AS position
+    FROM SESSION_RESULT sr
+    INNER JOIN drivers d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions s ON sr.session_key = s.session_key
+    INNER JOIN WEATHER w ON s.session_key = w.session_key
+    WHERE d.first_name = :firstName
+      AND d.last_name = :lastName
+      AND s.session_type = 'Race'
+      AND w.rainfall > 0
+""")
+    suspend fun getWetRacePositions(firstName: String, lastName: String): List<DriverPosition>
+
+    @Query("""
+    SELECT sr.position AS position
+    FROM SESSION_RESULT sr
+    INNER JOIN drivers d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions s ON sr.session_key = s.session_key
+    INNER JOIN WEATHER w ON s.session_key = w.session_key
+    WHERE d.first_name = :firstName
+      AND d.last_name = :lastName
+      AND s.session_type = 'Race'
+      AND w.rainfall = 0
+""")
+    suspend fun getDryRacePositions(firstName: String, lastName: String): List<DriverPosition>
+
+    @Query("""
+    SELECT sr.dnf AS dnf
+    FROM SESSION_RESULT sr
+    INNER JOIN drivers d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions s ON sr.session_key = s.session_key
+    INNER JOIN WEATHER w ON s.session_key = w.session_key
+    WHERE d.first_name = :firstName
+      AND d.last_name = :lastName
+      AND s.session_type = 'Race'
+      AND w.rainfall > 0
+""")
+    suspend fun getWetRaceDNFs(firstName: String, lastName: String): List<DnfResult>
+
+    @Query("""
+    SELECT sr.dnf AS dnf
+    FROM SESSION_RESULT sr
+    INNER JOIN drivers d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions s ON sr.session_key = s.session_key
+    INNER JOIN WEATHER w ON s.session_key = w.session_key
+    WHERE d.first_name = :firstName
+      AND d.last_name = :lastName
+      AND s.session_type = 'Race'
+      AND w.rainfall = 0
+""")
+    suspend fun getDryRaceDNFs(firstName: String, lastName: String): List<DnfResult>
 
 data class DriverPosition(
     val position: Int
 )
+}

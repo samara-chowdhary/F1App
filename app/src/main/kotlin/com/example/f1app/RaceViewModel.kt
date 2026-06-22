@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 data class DriverPredictionState(
     val drivers: List<DriverStandingRow> = emptyList(),
     val dnfRisks: List<DriverStandingRow> = emptyList(),
+    val wetPositionImpact: List<DriverStandingRow> = emptyList(),
+    val wetDnfImpact: List<DriverStandingRow> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -23,12 +25,22 @@ class RaceViewModel(
     private val _state = MutableStateFlow(DriverPredictionState())
     val state: StateFlow<DriverPredictionState> = _state
 
+    private val _isWetRace = MutableStateFlow(false)
+    val isWetRace: StateFlow<Boolean> = _isWetRace
+
     init {
-        loadPredictions()
+        loadPredictions(false)
     }
 
-    private fun loadPredictions() {
+    fun toggleWetRace(isWet: Boolean) {
+        _isWetRace.value = isWet
+        loadPredictions(isWet)
+    }
+
+    private fun loadPredictions(isWetRace: Boolean) {
         viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+
             val predictionRepo = PredictionRepository(database.driverDao())
             val dnfRepo = DNFPredictionRepository(database.driverDao())
             val drivers = database.driverDao().getCurrentDrivers()
@@ -40,34 +52,21 @@ class RaceViewModel(
                 if (driver.firstName != null && driver.lastName != null) {
                     val team = database.driverParticipationDao().getLatestTeamForDriver(driver.driverNumber) ?: "Unknown"
 
-                    // Position prediction
                     val prediction = predictionRepo.predictNextPosition(
                         firstName = driver.firstName,
                         lastName = driver.lastName,
-                        trackLocation = trackLocation
+                        trackLocation = trackLocation,
+                        isWetRace = isWetRace
                     )
                     if (prediction != null) {
                         predictions.add(
-                            DriverStandingRow(
-                                position = 0,
-                                firstName = driver.firstName,
-                                lastName = driver.lastName,
-                                team = team,
-                                value = "P${Math.round(prediction)}"
-                            )
+                            DriverStandingRow(0, driver.firstName, driver.lastName, team, "P${Math.round(prediction)}")
                         )
                     }
 
-                    // DNF Risk
-                    val dnfRisk = dnfRepo.predictDnfRisk(driver.firstName, driver.lastName)
+                    val dnfRisk = dnfRepo.predictDnfRisk(driver.firstName, driver.lastName, isWetRace)
                     dnfRisks.add(
-                        DriverStandingRow(
-                            position = 0,
-                            firstName = driver.firstName,
-                            lastName = driver.lastName,
-                            team = team,
-                            value = dnfRisk
-                        )
+                        DriverStandingRow(0, driver.firstName, driver.lastName, team, dnfRisk)
                     )
                 }
             }
@@ -78,12 +77,7 @@ class RaceViewModel(
 
             val sortedDnfRisks = dnfRisks
                 .sortedByDescending {
-                    when (it.value) {
-                        "High" -> 3
-                        "Medium" -> 2
-                        "Low" -> 1
-                        else -> 0
-                    }
+                    when (it.value) { "High" -> 3; "Medium" -> 2; "Low" -> 1; else -> 0 }
                 }
                 .mapIndexed { index, row -> row.copy(position = index + 1) }
 

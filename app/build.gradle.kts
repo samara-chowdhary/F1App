@@ -7,9 +7,7 @@ plugins {
 android {
     namespace = "com.example.f1app"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
     }
 
     defaultConfig {
@@ -55,6 +53,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core:2.15.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.navigation.compose)
     val roomVersion = "2.7.1"
     implementation("androidx.room:room-runtime:$roomVersion")

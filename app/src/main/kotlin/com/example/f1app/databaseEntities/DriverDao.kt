@@ -29,19 +29,19 @@ interface DriverDao {
     suspend fun getHistoricalPositions(firstName: String, lastName: String, location: String): List<DriverPosition>
 
     @Query("""
-        SELECT sr.position AS position
-        FROM session_result AS sr
-        INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
-        INNER JOIN sessions AS s ON sr.session_key = s.session_key
-        INNER JOIN MEETINGS AS m ON s.meeting_key = m.meeting_key
-        WHERE d.first_name = :firstName
-        AND d.last_name = :lastName
-        AND s.session_type = 'Race'
-        ORDER BY m.date_start DESC
-        LIMIT 5
-        """)
+    SELECT sr.position AS position
+    FROM session_result AS sr
+    INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions AS s ON sr.session_key = s.session_key
+    INNER JOIN MEETINGS AS m ON s.meeting_key = m.meeting_key
+    WHERE d.first_name = :firstName
+    AND d.last_name = :lastName
+    AND s.session_type = 'Race'
+    AND m.year = (SELECT MAX(year) FROM MEETINGS)
+    ORDER BY m.date_start DESC
+    LIMIT 5
+""")
     suspend fun getRecentPositions(firstName: String, lastName: String): List<DriverPosition>
-
     @Query("""
     SELECT dp.team_name FROM DRIVER_PARTICIPATION dp
     WHERE dp.driver_number = :driverNumber

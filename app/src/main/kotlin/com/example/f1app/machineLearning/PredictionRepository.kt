@@ -59,7 +59,10 @@ class PredictionRepository(val driverDao: DriverDao) {
         val trackRaw = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
         val trackPositions = trackRaw.map { it.position }
 
-        if (recentPositions.isEmpty() && trackPositions.isEmpty()) return null
+        // If a driver has almost no data, default to a reasonable midfield guess instead of a misleading number
+        if (recentPositions.isEmpty() && trackPositions.isEmpty()) {
+            return 11.0 // midfield default for rookies/unknowns
+        }
 
         val recentAvg = if (recentPositions.isNotEmpty()) recentPositions.average() else null
         val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else null

@@ -1,5 +1,6 @@
 package com.example.f1app
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.f1app.components.DriverStandingRow
@@ -58,6 +59,9 @@ class RaceViewModel(
                         trackLocation = trackLocation,
                         isWetRace = isWetRace
                     )
+
+                    Log.d("PREDICTION_DEBUG", "${driver.firstName} ${driver.lastName}: $prediction")
+
                     if (prediction != null) {
                         predictions.add(
                             DriverStandingRow(0, driver.firstName, driver.lastName, team, "P${Math.round(prediction)}")
@@ -86,6 +90,8 @@ class RaceViewModel(
                 dnfRisks = sortedDnfRisks,
                 isLoading = false
             )
+
+
         }
     }
 }

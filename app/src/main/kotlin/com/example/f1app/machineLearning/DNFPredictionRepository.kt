@@ -1,25 +1,23 @@
 package com.example.f1app.machineLearning
+
 import com.example.f1app.databaseEntities.DriverDao
 
 class DNFPredictionRepository(val driverDao: DriverDao) {
 
     suspend fun predictDnfRisk(firstName: String, lastName: String, isWetRace: Boolean = false): String {
-
-        val positions = if (isWetRace) {
-            driverDao.getWetRacePositions(firstName, lastName).map { it.position }
+        val dnfResults = if (isWetRace) {
+            driverDao.getWetRaceDNFs(firstName, lastName)
         } else {
-            driverDao.getRecentPositions(firstName, lastName).map { it.position }
+            driverDao.getRecentDNFs(firstName, lastName)
         }
 
-        if (positions.size < 3) return "Unknown"
+        if (dnfResults.isEmpty()) return "Unknown"
 
-        val avg = positions.average()
-        val variance = positions.sumOf { (it - avg) * (it - avg) } / positions.size
-        val stdDev = Math.sqrt(variance)
+        val dnfRate = dnfResults.count { it.dnf } / dnfResults.size.toDouble()
 
         return when {
-            stdDev >= 6.0 -> "High"
-            stdDev >= 3.0 -> "Medium"
+            dnfRate >= 0.3 -> "High"
+            dnfRate >= 0.15 -> "Medium"
             else -> "Low"
         }
     }

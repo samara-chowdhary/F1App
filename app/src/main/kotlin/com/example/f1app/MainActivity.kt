@@ -37,6 +37,7 @@ import com.example.f1app.components.LightsOutTopBar
 import com.example.f1app.machineLearning.PredictionRepository
 import com.example.f1app.screens.IndividualRaceScreen
 import com.example.f1app.screens.RacesScreen
+import com.example.f1app.screens.ResultsScreen
 import com.example.f1app.screens.homeScreen.HomeViewModelFactory
 import com.example.f1app.ui.theme.F1AppTheme
 import kotlinx.coroutines.Dispatchers
@@ -136,7 +137,11 @@ fun F1AppApp() {
                         }
                     )
                 }
-                composable(AppDestinations.RESULTS.route) { Text("Results Screen Content") }
+                composable(AppDestinations.RESULTS.route) {
+                    ResultsScreen(onCardClick = { route ->
+                        navController.navigate(route)
+                    })
+                }
                 composable(AppDestinations.DRIVERS.route) { Text("Drivers Screen Content") }
                 composable(AppDestinations.RACES.route) {
                     RacesScreen(onCardClick = { route ->

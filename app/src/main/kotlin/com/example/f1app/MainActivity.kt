@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,6 +35,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.f1app.components.LightsOutTopBar
 import com.example.f1app.machineLearning.PredictionRepository
 import com.example.f1app.screens.IndividualRaceScreen
+import com.example.f1app.screens.IndividualResultsScreen
 import com.example.f1app.screens.RacesScreen
 import com.example.f1app.screens.ResultsScreen
 import com.example.f1app.screens.homeScreen.HomeViewModelFactory
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                 val rounded = Math.round(result).toInt()
                 Log.d("PREDICTION", "Predicted position: $rounded")
             } else {
-                Log.d("PREDICTION","Could not calculate prediction: No historical data found.")
+                Log.d("PREDICTION", "Could not calculate prediction: No historical data found.")
             }
         }
 
@@ -84,7 +84,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@PreviewScreenSizes
 @Composable
 fun F1AppApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
@@ -124,37 +123,49 @@ fun F1AppApp() {
             ) {
                 composable(AppDestinations.HOME.route) {
                     val viewModel: HomeViewModel = viewModel(
-                        factory = HomeViewModelFactory(F1Database.getInstance((LocalContext.current)))
+                        factory = HomeViewModelFactory(F1Database.getInstance(LocalContext.current))
                     )
                     val nextRace by viewModel.nextRace.collectAsState()
 
                     HomeScreen(
                         nextRace = nextRace,
                         onRacesClick = { navController.navigate(AppDestinations.RACES.route) },
-                        onDriversClick = { navController.navigate(AppDestinations.DRIVERS.route) },
                         onNextRaceClick = { raceName ->
                             navController.navigate("race/$raceName/$raceName/$raceName")
                         }
                     )
                 }
+
                 composable(AppDestinations.RESULTS.route) {
                     ResultsScreen(onCardClick = { route ->
                         navController.navigate(route)
                     })
                 }
-                composable(AppDestinations.DRIVERS.route) { Text("Drivers Screen Content") }
+
                 composable(AppDestinations.RACES.route) {
                     RacesScreen(onCardClick = { route ->
                         navController.navigate(route)
                     })
                 }
-                composable(AppDestinations.CHAMPIONSHIPS.route) { Text("Championships Screen Content") }
+
+                composable(AppDestinations.CHAMPIONSHIPS.route) {
+                    Text("Championships Screen Content")
+                }
 
                 composable("race/{raceName}/{circuitName}/{trackLocation}") { backStackEntry ->
                     IndividualRaceScreen(
                         raceName = backStackEntry.arguments?.getString("raceName")?.replace("_", " ") ?: "",
                         circuitName = backStackEntry.arguments?.getString("circuitName")?.replace("_", " ") ?: "",
                         trackLocation = backStackEntry.arguments?.getString("trackLocation")?.replace("_", " ") ?: "",
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("result/{raceName}/{location}/{year}") { backStackEntry ->
+                    IndividualResultsScreen(
+                        raceName = backStackEntry.arguments?.getString("raceName")?.replace("_", " ") ?: "",
+                        location = backStackEntry.arguments?.getString("location")?.replace("_", " ") ?: "",
+                        year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: 2026,
                         onBack = { navController.popBackStack() }
                     )
                 }
@@ -168,7 +179,6 @@ enum class AppDestinations(
     val icon: Int,
     val route: String
 ) {
-    DRIVERS("Drivers", R.drawable.ic_account_box, "drivers"),
     RESULTS("Results", R.drawable.ic_flag, "results"),
     HOME("Home", R.drawable.ic_home, "home"),
     RACES("Races", R.drawable.ic_calendar, "races"),

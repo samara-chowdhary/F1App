@@ -21,7 +21,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.f1app.F1Database
 import com.example.f1app.RaceViewModel
 import com.example.f1app.RaceViewModelFactory
+import com.example.f1app.components.ConstructorsChampionshipDropDownBox
 import com.example.f1app.components.DNFDropDownBox
+import com.example.f1app.components.DriversChampionshipDropDownBox
 import com.example.f1app.components.StandingsDropDownBox
 import com.example.f1app.ui.theme.F1Font
 
@@ -123,6 +125,9 @@ fun IndividualRaceScreen(
                 StandingsDropDownBox(title = "Predicted Positions", drivers = state.drivers)
                 Spacer(modifier = Modifier.height(8.dp))
                 DNFDropDownBox(title = "DNF Risk", drivers = state.dnfRisks)
+                DriversChampionshipDropDownBox(title = "Drivers' Championship", drivers = state.drivers )
+                ConstructorsChampionshipDropDownBox(title = "Constructors' Championship", drivers = state.drivers)
+
             }
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -1,5 +1,6 @@
 package com.example.f1app.databaseEntities
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -136,4 +137,28 @@ interface DriverDao {
 data class DriverPosition(
     val position: Int
 )
+
+    @Query("""
+    SELECT d.first_name, d.last_name, sr.position, dp.team_name, sr.dnf
+    FROM SESSION_RESULT sr
+    INNER JOIN drivers d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions s ON sr.session_key = s.session_key
+    INNER JOIN MEETINGS m ON s.meeting_key = m.meeting_key
+    INNER JOIN CIRCUITS c ON m.circuit_key = c.circuit_key
+    LEFT JOIN DRIVER_PARTICIPATION dp ON sr.driver_number = dp.driver_number 
+        AND sr.session_key = dp.session_key
+    WHERE c.location LIKE :location
+    AND s.session_type = 'Race'
+    AND m.year = :year
+    ORDER BY sr.position ASC
+""")
+    suspend fun getRaceResults(location: String, year: Int): List<RaceResultRow>
+
+    data class RaceResultRow(
+        @ColumnInfo(name = "first_name") val firstName: String,
+        @ColumnInfo(name = "last_name") val lastName: String,
+        val position: Int,
+        @ColumnInfo(name = "team_name") val teamName: String?,
+        val dnf: Boolean = false
+    )
 }

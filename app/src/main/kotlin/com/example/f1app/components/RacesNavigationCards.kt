@@ -26,7 +26,7 @@ data class RaceData(
     val flagDrawableId: Int,
     val screenKey: String,
     val circuitName: String,
-    val trackLocation: String
+    val trackLocation: String,
 )
 
 @Composable
@@ -38,7 +38,8 @@ fun RaceNavigationCard(
     route: String,
     onButtonClick: (String) -> Unit,
     backgroundColor: Color = Color(0xFF111111),
-    buttonColor: Color = Color(0xFFFF1111)
+    buttonColor: Color = Color(0xFFFF1111),
+    buttonText: String = "View Predictions"
 ) {
     Card(
         onClick = { onButtonClick(route) },
@@ -113,7 +114,7 @@ fun RaceNavigationCard(
                         .padding(horizontal = 24.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "View Predictions",
+                        text = buttonText,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,

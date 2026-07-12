@@ -161,4 +161,40 @@ data class DriverPosition(
         @ColumnInfo(name = "team_name") val teamName: String?,
         val dnf: Boolean = false
     )
+
+    @Query("""
+    SELECT d.first_name, d.last_name, dc.points_current, dc.position_current, dp.team_name
+    FROM DRIVERS_CHAMPIONSHIP dc
+    INNER JOIN drivers d ON dc.driver_number = d.driver_number
+    LEFT JOIN DRIVER_PARTICIPATION dp ON dc.driver_number = dp.driver_number
+    WHERE dc.session_key = (
+        SELECT MAX(session_key) FROM DRIVERS_CHAMPIONSHIP
+    )
+    ORDER BY dc.position_current ASC
+""")
+    suspend fun getCurrentDriversChampionship(): List<ChampionshipRow>
+
+    @Query("""
+    SELECT tc.team_name, tc.points_current, tc.position_current
+    FROM TEAMS_CHAMPIONSHIP tc
+    WHERE tc.session_key = (
+        SELECT MAX(session_key) FROM TEAMS_CHAMPIONSHIP
+    )
+    ORDER BY tc.position_current ASC
+""")
+    suspend fun getCurrentConstructorsChampionship(): List<ConstructorsChampionshipRow>
+
+    data class ChampionshipRow(
+        @ColumnInfo(name = "first_name") val firstName: String,
+        @ColumnInfo(name = "last_name") val lastName: String,
+        @ColumnInfo(name = "points_current") val pointsCurrent: Int,
+        @ColumnInfo(name = "position_current") val positionCurrent: Int,
+        @ColumnInfo(name = "team_name") val teamName: String?
+    )
+
+    data class ConstructorsChampionshipRow(
+        @ColumnInfo(name = "team_name") val teamName: String,
+        @ColumnInfo(name = "points_current") val pointsCurrent: Int,
+        @ColumnInfo(name = "position_current") val positionCurrent: Int
+    )
 }

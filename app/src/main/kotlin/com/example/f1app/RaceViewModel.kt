@@ -16,6 +16,7 @@ data class DriverPredictionState(
     val wetPositionImpact: List<DriverStandingRow> = emptyList(),
     val wetDnfImpact: List<DriverStandingRow> = emptyList(),
     val driversChampionshipImpact: List<DriverStandingRow> = emptyList(),
+    val constructorsChampionshipImpact: List<DriverStandingRow> = emptyList(),
     val isLoading: Boolean = true
 )
 

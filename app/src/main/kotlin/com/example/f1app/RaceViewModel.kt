@@ -70,13 +70,21 @@ class RaceViewModel(
                         isWetRace = isWetRace
                     )
 
-                    Log.d("PREDICTION_DEBUG", "${driver.firstName} ${driver.lastName}: $prediction")
-
                     if (prediction != null) {
+                        val bracket = predictionRepo.getPredictionBracket(prediction)
+                        val value = "P${Math.round(prediction)} · $bracket"
+                        Log.d("PRED_DEBUG", "${driver.firstName} ${driver.lastName}: $value")
                         predictions.add(
-                            DriverStandingRow(0, driver.firstName, driver.lastName, team, "P${Math.round(prediction)}")
+                            DriverStandingRow(
+                                position = 0,
+                                firstName = driver.firstName,
+                                lastName = driver.lastName,
+                                team = team,
+                                value = "P${Math.round(prediction)} · $bracket"
+                            )
                         )
                     }
+
 
                     val dnfRisk = dnfRepo.predictDnfRisk(driver.firstName, driver.lastName, isWetRace)
                     dnfRisks.add(

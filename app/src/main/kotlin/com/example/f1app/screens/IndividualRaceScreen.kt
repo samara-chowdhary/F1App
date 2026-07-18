@@ -125,7 +125,9 @@ fun IndividualRaceScreen(
                 StandingsDropDownBox(title = "Predicted Positions", drivers = state.drivers)
                 Spacer(modifier = Modifier.height(8.dp))
                 DNFDropDownBox(title = "DNF Risk", drivers = state.dnfRisks)
+                Spacer(modifier = Modifier.height(8.dp))
                 DriversChampionshipDropDownBox(title = "Drivers' Championship", drivers = state.driversChampionshipImpact )
+                Spacer(modifier = Modifier.height(8.dp))
                 ConstructorsChampionshipDropDownBox(title = "Constructors' Championship", drivers = state.constructorsChampionshipImpact)
 
             }

@@ -3,10 +3,6 @@ package com.example.f1app.machineLearning
 import kotlin.math.ln
 import kotlin.math.pow
 
-val weights =  listOf<Double>()
-val features =  listOf<Double>()
-val bias: Double = 0.0;
-
 //function for creating the sigmoid
 fun sigmoid(z: Double): Double {
     val e = 2.71828
@@ -25,7 +21,7 @@ fun calculateZ(weights: List<Double>, features: List<Double>, bias: Double): Dou
 }
 
 //prediction function
-fun predict() : Double {
+fun predictBinary(weights: List<Double>, features: List<Double>, bias: Double) : Double {
     val z = calculateZ(weights, features, bias)
     val probability = sigmoid(z)
     if(probability >= 0.5){
@@ -36,11 +32,16 @@ fun predict() : Double {
     }
 }
 
+fun predictProbability(weights: List<Double>, features: List<Double>, bias: Double): Double {  // added: needed for DNF probability
+    val z = calculateZ(weights, features, bias)
+    return sigmoid(z)
+}
+
 //loss function
 fun calculateLoss(prediction: Double, actual: Double) : Double{
 
-    val term1 = -actual * ln(prediction)
-    val term2 = (1 - actual) * ln(1 - prediction)
+    val term1 = -actual * ln(prediction + 1e-9)
+    val term2 = (1 - actual) * ln(1 - prediction + 1e-9)
 
     val loss = term1 - term2
     return loss

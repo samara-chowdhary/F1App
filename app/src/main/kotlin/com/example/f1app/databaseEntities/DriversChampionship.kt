@@ -9,8 +9,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 data class DriversChampionship(
     @ColumnInfo(name = "driver_number") val driverNumber: Int = 0,
     @ColumnInfo(name = "session_key") val sessionKey: Int = 0,
-    @ColumnInfo(name = "points_current") val pointsCurrent: Int = 0,
-    @ColumnInfo(name = "points_start") val pointsStart: Int = 0,
-    @ColumnInfo(name = "position_current") val positionCurrent: Int = 0,
-    @ColumnInfo(name = "position_start") val positionStart: Int = 0
+    @ColumnInfo(name = "points_current") val pointsCurrent: Int?,
+    @ColumnInfo(name = "points_start") val pointsStart: Int?,
+    @ColumnInfo(name = "position_current") val positionCurrent: Int?,
+    @ColumnInfo(name = "position_start") val positionStart: Int?
 )

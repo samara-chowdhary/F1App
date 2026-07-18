@@ -7,9 +7,6 @@ import com.example.f1app.databaseEntities.DriverDao.RaceResultRow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 data class RaceResultsState(
     val results: List<RaceResultRow> = emptyList(),

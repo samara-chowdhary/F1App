@@ -15,18 +15,24 @@ interface DriverDao {
     suspend fun getAllDrivers(): List<Driver>
 
     @Query("""
-        SELECT sr.position AS position
-        FROM session_result AS sr
-        INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
-        INNER JOIN sessions AS s ON sr.session_key = s.session_key
-        INNER JOIN meetings AS m ON s.meeting_key = m.meeting_key
-        INNER JOIN circuits AS c ON m.circuit_key = c.circuit_key
-        WHERE d.first_name = :firstName
-          AND d.last_name = :lastName
-          AND c.location LIKE :location
-          AND s.session_type = 'Race'
-        ORDER BY m.year ASC
-    """)
+    SELECT sr.position AS position
+    FROM session_result AS sr
+    INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
+    INNER JOIN sessions AS s ON sr.session_key = s.session_key
+    INNER JOIN meetings AS m ON s.meeting_key = m.meeting_key
+    INNER JOIN circuits AS c ON m.circuit_key = c.circuit_key
+    WHERE d.first_name = :firstName
+      AND d.last_name = :lastName
+      AND c.location LIKE :location
+      AND s.session_type = 'Race'
+      AND s.session_key = (
+          SELECT MAX(s2.session_key)
+          FROM sessions s2
+          WHERE s2.meeting_key = m.meeting_key
+          AND s2.session_type = 'Race'
+      )
+    ORDER BY m.year ASC
+""")
     suspend fun getHistoricalPositions(firstName: String, lastName: String, location: String): List<DriverPosition>
 
     @Query("""
@@ -39,10 +45,18 @@ interface DriverDao {
     AND d.last_name = :lastName
     AND s.session_type = 'Race'
     AND m.year = (SELECT MAX(year) FROM MEETINGS)
+    AND s.session_key = (
+        SELECT MAX(s2.session_key) 
+        FROM sessions s2 
+        WHERE s2.meeting_key = m.meeting_key 
+        AND s2.session_type = 'Race'
+    )
     ORDER BY m.date_start DESC
     LIMIT 5
 """)
     suspend fun getRecentPositions(firstName: String, lastName: String): List<DriverPosition>
+
+
     @Query("""
     SELECT dp.team_name FROM DRIVER_PARTICIPATION dp
     WHERE dp.driver_number = :driverNumber
@@ -77,11 +91,18 @@ interface DriverDao {
     WHERE d.first_name = :firstName
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
+      AND s.session_key = (
+          SELECT MAX(s2.session_key)
+          FROM sessions s2
+          WHERE s2.meeting_key = (
+              SELECT s3.meeting_key FROM sessions s3 WHERE s3.session_key = s.session_key
+          )
+          AND s2.session_type = 'Race'
+      )
     ORDER BY s.date_start DESC
     LIMIT 10
 """)
     suspend fun getRecentDNFs(firstName: String, lastName: String): List<DnfResult>
-
     @Query("""
     SELECT sr.position AS position
     FROM SESSION_RESULT sr
@@ -92,6 +113,15 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall > 0
+      AND s.session_key = (
+          SELECT MAX(s2.session_key)
+          FROM sessions s2
+          INNER JOIN MEETINGS m2 ON s2.meeting_key = m2.meeting_key
+          WHERE s2.meeting_key = (
+              SELECT s3.meeting_key FROM sessions s3 WHERE s3.session_key = s.session_key
+          )
+          AND s2.session_type = 'Race'
+      )
 """)
     suspend fun getWetRacePositions(firstName: String, lastName: String): List<DriverPosition>
 
@@ -105,6 +135,14 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall = 0
+      AND s.session_key = (
+          SELECT MAX(s2.session_key)
+          FROM sessions s2
+          WHERE s2.meeting_key = (
+              SELECT s3.meeting_key FROM sessions s3 WHERE s3.session_key = s.session_key
+          )
+          AND s2.session_type = 'Race'
+      )
 """)
     suspend fun getDryRacePositions(firstName: String, lastName: String): List<DriverPosition>
 
@@ -118,6 +156,14 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall > 0
+      AND s.session_key = (
+          SELECT MAX(s2.session_key)
+          FROM sessions s2
+          WHERE s2.meeting_key = (
+              SELECT s3.meeting_key FROM sessions s3 WHERE s3.session_key = s.session_key
+          )
+          AND s2.session_type = 'Race'
+      )
 """)
     suspend fun getWetRaceDNFs(firstName: String, lastName: String): List<DnfResult>
 
@@ -131,10 +177,18 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall = 0
+      AND s.session_key = (
+          SELECT MAX(s2.session_key)
+          FROM sessions s2
+          WHERE s2.meeting_key = (
+              SELECT s3.meeting_key FROM sessions s3 WHERE s3.session_key = s.session_key
+          )
+          AND s2.session_type = 'Race'
+      )
 """)
     suspend fun getDryRaceDNFs(firstName: String, lastName: String): List<DnfResult>
 
-data class DriverPosition(
+    data class DriverPosition(
     val position: Int
 )
 

@@ -19,7 +19,7 @@ import com.example.f1app.databaseEntities.TeamsChampionship
 import com.example.f1app.databaseEntities.Weather
 import com.example.f1app.databaseEntities.WeatherDao
 
-@Database(entities = [Session::class, Driver::class, SessionResult::class, Meeting::class, Circuit::class, DriverParticipation:: class, Weather:: class, DriversChampionship:: class, TeamsChampionship:: class], version = 2)
+@Database(entities = [Session::class, Driver::class, SessionResult::class, Meeting::class, Circuit::class, DriverParticipation:: class, Weather:: class, DriversChampionship:: class, TeamsChampionship:: class], version = 3)
 abstract class F1Database : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
     abstract fun driverDao(): DriverDao

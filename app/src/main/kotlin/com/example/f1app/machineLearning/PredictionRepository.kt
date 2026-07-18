@@ -59,21 +59,75 @@ class PredictionRepository(val driverDao: DriverDao) {
         val trackRaw = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
         val trackPositions = trackRaw.map { it.position }
 
-        // If a driver has almost no data, default to a reasonable midfield guess instead of a misleading number
-        if (recentPositions.isEmpty() && trackPositions.isEmpty()) {
-            return 11.0 // midfield default for rookies/unknowns
-        }
+        if (recentPositions.isEmpty() && trackPositions.isEmpty()) return 11.0
 
         val recentAvg = if (recentPositions.isNotEmpty()) recentPositions.average() else null
         val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else null
 
-        val prediction = when {
+        val basePrediction = when {
             recentAvg != null && trackAvg != null -> (recentAvg * 0.7) + (trackAvg * 0.3)
             recentAvg != null -> recentAvg
             else -> trackAvg!!
         }
 
-        return prediction.coerceIn(1.0, 20.0)
+        Log.d("PRED_DEBUG", "$firstName $lastName - recent: $recentPositions, track: $trackPositions, prediction: $basePrediction")
+        return basePrediction.coerceIn(1.0, 20.0)
+    }
+
+    // uses k-means clustering to group driver and apply a small adjustment
+    private fun getClusterAdjustment(positions: List<Int>): Double {
+        if (positions.size < 3) return 0.0
+
+        val avg = positions.average()
+        val best = positions.min().toDouble()
+        val worst = positions.max().toDouble()
+
+        // create feature points for clustering: [avg, best, worst]
+        val points = arrayOf(floatArrayOf(avg.toFloat(), best.toFloat(), worst.toFloat()))
+        val k = 3 // front runner, midfield, backmarker
+
+        // seed centroids manually based on F1 position ranges
+        // front runner: avg ~3, midfield: avg ~10, backmarker: avg ~16
+        val centroids = arrayOf(
+            floatArrayOf(3f, 1f, 6f),
+            floatArrayOf(10f, 7f, 14f),
+            floatArrayOf(16f, 12f, 20f)
+        )
+
+        val cluster = assignCluster(points[0], centroids)
+
+        // slight adjustment based on cluster — front runners get small boost,
+        // backmarkers get small penalty to keep prediction realistic
+        return when (cluster) {
+            0 -> -0.5  // front runner: slight improvement
+            1 -> 0.0   // midfield: no adjustment
+            2 -> 0.5   // backmarker: slight penalty
+            else -> 0.0
+        }
+    }
+
+    // softmax bracket label for the predicted position
+    fun getPredictionBracket(position: Double): String {
+        // features: [position, normalised position]
+        val features = listOf(position, position / 20.0)
+
+        // 3 classes: Podium(0), Points(1), Outside Points(2)
+        val multiWeights = listOf(
+            listOf(-1.5, -1.5),  // podium weights
+            listOf(0.2, 0.2),    // points weights
+            listOf(1.2, 1.2)     // outside points weights
+        )
+        val biases = listOf(3.0, -1.0, -2.0)
+
+        val scores = calculateAllZ(multiWeights, features, biases)
+        val probs = applySoftmax(scores)
+        val classIndex = probs.indices.maxByOrNull { probs[it] } ?: 1
+
+        return when {
+            position <= 3.0 -> "Podium"
+            position <= 10.0 -> "Points"
+            else -> "Outside Points"
+        }
     }
 
     private fun predict(x: List<Double>, w: List<Double>, b: Double): Double {

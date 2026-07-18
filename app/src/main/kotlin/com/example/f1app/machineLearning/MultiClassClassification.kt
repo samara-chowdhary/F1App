@@ -2,21 +2,19 @@ package com.example.f1app.machineLearning
 
 import kotlin.math.ln
 
-val multiWeights: List<List<Double>> = listOf()
-val biases = listOf<Double>()
-
-
 //function for calculating all of the z values
-fun calculateAllZ(multiWeights: List<List<Double>>, features: List<Double>, biases: List<Double>) {
+fun calculateAllZ(multiWeights: List<List<Double>>, features: List<Double>, biases: List<Double>): DoubleArray {
     val scores = DoubleArray(biases.size)
 
-    for (i in 0 until biases.size - 1) {
+    for (i in 0 until biases.size ) {
         var z: Double = 0.0
-        for (j in 0 until features.size - 1) {
+        for (j in 0 until features.size) {
             z = z + (multiWeights[i][j] * features[j])
         }
         scores[i] = z + biases[i]
     }
+
+    return scores
 }
 
 //application of the softmax function
@@ -26,12 +24,12 @@ fun applySoftmax(scores: DoubleArray): DoubleArray {
     val e = 2.71828
 
     //calculate the denominator
-    for(i in 0 until scores.size - 1){
+    for(i in 0 until scores.size){
         sumExp = sumExp + (Math.pow(e, scores[i]))
     }
 
     //divide each e^z by the sum
-    for(i in 0 until scores.size - 1){
+    for(i in 0 until scores.size){
         probabilities[i] = Math.pow(e, scores[i]) / sumExp
     }
 

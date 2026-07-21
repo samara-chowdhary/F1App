@@ -70,7 +70,10 @@ class PredictionRepository(val driverDao: DriverDao) {
             else -> trackAvg!!
         }
 
-        Log.d("PRED_DEBUG", "$firstName $lastName - recent: $recentPositions, track: $trackPositions, prediction: $basePrediction")
+        Log.d(
+            "PRED_RESULT",
+            "$firstName -> recentAvg=$recentAvg trackAvg=$trackAvg prediction=$basePrediction"
+        )
         return basePrediction.coerceIn(1.0, 20.0)
     }
 

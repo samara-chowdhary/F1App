@@ -220,7 +220,12 @@ interface DriverDao {
     SELECT d.first_name, d.last_name, dc.points_current, dc.position_current, dp.team_name
     FROM DRIVERS_CHAMPIONSHIP dc
     INNER JOIN drivers d ON dc.driver_number = d.driver_number
-    LEFT JOIN DRIVER_PARTICIPATION dp ON dc.driver_number = dp.driver_number
+    LEFT JOIN DRIVER_PARTICIPATION dp 
+    ON dc.driver_number = dp.driver_number
+    AND dp.session_key = (
+        SELECT MAX(session_key)
+        FROM DRIVER_PARTICIPATION
+    )
     WHERE dc.session_key = (
         SELECT MAX(session_key) FROM DRIVERS_CHAMPIONSHIP
     )

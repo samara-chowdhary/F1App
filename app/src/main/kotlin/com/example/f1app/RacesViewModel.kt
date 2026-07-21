@@ -1,5 +1,6 @@
 package com.example.f1app
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,14 +15,18 @@ class RacesViewModel(private val database: F1Database) : ViewModel() {
     val races: StateFlow<List<RaceCalendarRow>> = _races
 
     init {
+        Log.d("RACES_VM", "RacesViewModel created")
         loadRaces()
     }
 
     private fun loadRaces() {
         viewModelScope.launch {
-            _races.value = database.sessionDao().getRacesForYear(2026)
+            val result = database.sessionDao().getRacesForYear(2026)
+            Log.d("RACES_VM", "Loaded ${result.size} races")
+            _races.value = result
         }
     }
+
 }
 
 class RacesViewModelFactory(private val database: F1Database) : ViewModelProvider.Factory {
@@ -29,4 +34,3 @@ class RacesViewModelFactory(private val database: F1Database) : ViewModelProvide
         return RacesViewModel(database) as T
     }
 }
-

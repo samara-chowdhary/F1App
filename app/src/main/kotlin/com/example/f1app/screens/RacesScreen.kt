@@ -1,5 +1,6 @@
 package com.example.f1app.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -45,6 +46,7 @@ fun RacesScreen(onCardClick: (String) -> Unit) {
             )
         } else {
             races.forEach { race ->
+                Log.d("RACE_ROUTE", "meeting: ${race.meetingName}, location: ${race.location}")
                 val dateRange = race.dateStart?.substring(8, 10)?.let {
                     "${it} - ${race.dateEnd?.substring(8, 10) ?: ""}"
                 } ?: "TBD"
@@ -63,7 +65,7 @@ fun RacesScreen(onCardClick: (String) -> Unit) {
                     month = month,
                     countryName = getCountryName(race.meetingName),
                     flagDrawableId = getFlagForMeeting(race.meetingName),
-                    route = "race/${race.meetingName.replace(" ", "_")}/${race.location?.replace(" ", "_")}/${race.location?.replace(" ", "_")}",
+                    route = "race/${race.meetingName.replace(" ", "_")}/${race.meetingName.replace(" ", "_")}/${race.location?.replace(" ", "_")}",
                     onButtonClick = { route -> onCardClick(route) }
                 )
             }

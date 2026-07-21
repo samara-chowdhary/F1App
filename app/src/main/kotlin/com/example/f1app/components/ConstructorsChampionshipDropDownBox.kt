@@ -90,11 +90,7 @@ fun ConstructorsChampionshipDropDownBox(
 
                             Text(
                                 text = driver.value,
-                                color = when (driver.value) {
-                                    "High" -> Color.Red
-                                    "Medium" -> Color(0xFFFFA500)
-                                    else -> Color(0xFF00C853)
-                                },
+                                color = Color.Red,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 fontFamily = F1Font

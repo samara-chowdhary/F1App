@@ -34,11 +34,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.f1app.components.LightsOutTopBar
 import com.example.f1app.machineLearning.PredictionRepository
+import com.example.f1app.screens.ChampsScreen
 import com.example.f1app.screens.IndividualRaceScreen
 import com.example.f1app.screens.IndividualResultsScreen
 import com.example.f1app.screens.RacesScreen
 import com.example.f1app.screens.ResultsScreen
 import com.example.f1app.screens.homeScreen.HomeViewModelFactory
+import com.example.f1app.ChampsViewModel
 import com.example.f1app.ui.theme.F1AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -149,7 +151,19 @@ fun F1AppApp() {
                 }
 
                 composable(AppDestinations.CHAMPIONSHIPS.route) {
-                    Text("Championships Screen Content")
+
+                    val viewModel: ChampsViewModel = viewModel(
+                        factory = ChampsViewModelFactory(
+                            F1Database.getInstance(LocalContext.current)
+                        )
+                    )
+
+                    ChampsScreen(
+                        viewModel = viewModel,
+                        onCardClick = { route ->
+                            navController.navigate(route)
+                        }
+                    )
                 }
 
                 composable("race/{raceName}/{circuitName}/{trackLocation}") { backStackEntry ->

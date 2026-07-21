@@ -94,7 +94,11 @@ class RaceViewModel(
             }
 
             val sortedPredictions = predictions
-                .sortedBy { it.value.removePrefix("P").toIntOrNull() ?: 99 }
+                .sortedBy {
+                    it.value.substringAfter("P")
+                        .substringBefore(" ")
+                        .toIntOrNull() ?: 99
+                }
                 .mapIndexed { index, row -> row.copy(position = index + 1) }
 
             val sortedDnfRisks = dnfRisks
@@ -111,8 +115,11 @@ class RaceViewModel(
             val driversImpact = mutableListOf<DriverStandingRow>()
             val constructorsImpact = mutableMapOf<String, Int>() // team -> points gained
 
-            predictions.forEach { prediction ->
-                val predictedPos = prediction.value.removePrefix("P").toIntOrNull() ?: 0
+
+            sortedPredictions.forEach { prediction ->
+                val predictedPos = prediction.value.substringAfter("P")
+                    .substringBefore(" ")
+                    .toIntOrNull() ?: 0
                 val pointsGained = getPointsForPosition(predictedPos)
                 val current = currentStandings.find {
                     it.firstName == prediction.firstName && it.lastName == prediction.lastName

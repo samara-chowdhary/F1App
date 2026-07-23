@@ -9,11 +9,10 @@ class PredictionRepository(val driverDao: DriverDao) {
     var trainedB: Double = 0.0
     var isModelTrained = false
 
-    suspend fun trainModelForDriver(firstName: String, lastName: String, trackLocation: String) {
-        val recentRaw = driverDao.getRecentPositions(firstName, lastName)
-        val recentPositions = recentRaw.map { it.position }
-
-        if (recentPositions.size < 2) return
+    suspend fun trainModelForDriver(
+        recentPositions: List<Int>
+    ): Pair<List<Double>, Double>? {
+        if (recentPositions.size < 2) return null
 
         val costX = mutableListOf<List<Double>>()
         val costY = mutableListOf<Double>()
@@ -23,24 +22,23 @@ class PredictionRepository(val driverDao: DriverDao) {
             val avgPos = historySubset.average()
             val lastPos = historySubset.last().toDouble()
             val bestPos = historySubset.minOrNull()?.toDouble() ?: avgPos
-            costX.add(listOf(avgPos, lastPos, bestPos))
-            costY.add(recentPositions[i].toDouble())
+
+            // Normalize features to [0.0, 1.0] range (Dividing by 20.0 max position)
+            costX.add(listOf(avgPos / 20.0, lastPos / 20.0, bestPos / 20.0))
+            costY.add(recentPositions[i].toDouble() / 20.0)
         }
 
-        if (costX.isEmpty()) return
+        if (costX.isEmpty()) return null
 
-        val (finalW, finalB) = gradientDescent(
+        // Use a smaller learning rate (alpha = 0.01) with scaled features
+        return gradientDescent(
             X = costX,
             y = costY,
-            initialW = listOf(0.0, 0.0, 0.0),
-            initialB = 0.0,
-            alpha = 0.001,
-            iterations = 5000
+            initialW = listOf(0.1, 0.1, 0.1),
+            initialB = 0.1,
+            alpha = 0.01,
+            iterations = 1000
         )
-
-        this.trainedW = finalW
-        this.trainedB = finalB
-        this.isModelTrained = true
     }
 
     suspend fun predictNextPosition(
@@ -49,35 +47,79 @@ class PredictionRepository(val driverDao: DriverDao) {
         trackLocation: String,
         isWetRace: Boolean = false
     ): Double? {
+
         val recentRaw = if (isWetRace) {
             driverDao.getWetRacePositions(firstName, lastName)
         } else {
             driverDao.getRecentPositions(firstName, lastName)
         }
-        val recentPositions = recentRaw.map { it.position }
+        val recentPositions = removeAnomalies(recentRaw.map { it.position })
 
         val trackRaw = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
-        val trackPositions = trackRaw.map { it.position }
+        val trackPositions = removeAnomalies(trackRaw.map { it.position })
 
         if (recentPositions.isEmpty() && trackPositions.isEmpty()) return 11.0
 
-        val recentAvg = if (recentPositions.isNotEmpty()) recentPositions.average() else null
-        val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else null
+        val trainedWeights = trainModelForDriver(recentPositions)
 
-        val basePrediction = when {
-            recentAvg != null && trackAvg != null -> (recentAvg * 0.7) + (trackAvg * 0.3)
-            recentAvg != null -> recentAvg
-            else -> trackAvg!!
+        val mlRecentPred: Double? = if (trainedWeights != null && recentPositions.size >= 2) {
+            val (w, b) = trainedWeights
+
+            val avgPos = recentPositions.average()
+            val lastPos = recentPositions.last().toDouble()
+            val bestPos = recentPositions.minOrNull()?.toDouble() ?: avgPos
+
+            val features = listOf(avgPos / 20.0, lastPos / 20.0, bestPos / 20.0)
+
+            val normalizedPred = predict(features, w, b)
+            val scaledPred = normalizedPred * 20.0
+
+            if (scaledPred.isNaN() || scaledPred.isInfinite()) {
+                recentPositions.average()
+            } else {
+                scaledPred
+            }
+        } else if (recentPositions.isNotEmpty()) {
+            recentPositions.average()
+        } else {
+            null
         }
 
-        Log.d(
-            "PRED_RESULT",
-            "$firstName -> recentAvg=$recentAvg trackAvg=$trackAvg prediction=$basePrediction"
-        )
-        return basePrediction.coerceIn(1.0, 20.0)
-    }
+        val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else null
 
-    // uses k-means clustering to group driver and apply a small adjustment
+        val basePrediction: Double = when {
+            mlRecentPred != null && trackAvg != null -> (mlRecentPred * 0.7) + (trackAvg * 0.3)
+            mlRecentPred != null -> mlRecentPred
+            trackAvg != null -> trackAvg
+            else -> 11.0
+        }
+
+        val clusterAdj = getClusterAdjustment(recentPositions)
+        var finalPrediction = basePrediction + clusterAdj
+
+        if (isWetRace) {
+            // Wet conditions increase volatility: good wet drivers scale up, lower confidence increases variance
+            val wetFactor = if (recentPositions.isNotEmpty() && recentPositions.average() <= 6.0) {
+                -0.8 // Top drivers in wet races get a slight boost (e.g. rain masters)
+            } else {
+                1.2  // Midfield/backmarkers face higher variance in wet conditions
+            }
+            finalPrediction += wetFactor
+        }
+
+        val currentStandings = driverDao.getCurrentDriversChampionship()
+        val currentStandingPos = currentStandings.find {
+            it.firstName.equals(firstName, ignoreCase = true) &&
+                    it.lastName.equals(lastName, ignoreCase = true)
+        }?.positionCurrent ?: 10
+
+        val minAllowed = (currentStandingPos - 6).coerceAtLeast(1)
+        val maxAllowed = (currentStandingPos + 6).coerceAtMost(20)
+
+        val safePrediction = finalPrediction.coerceIn(minAllowed.toDouble(), maxAllowed.toDouble())
+
+        return safePrediction
+    }
     private fun getClusterAdjustment(positions: List<Int>): Double {
         if (positions.size < 3) return 0.0
 

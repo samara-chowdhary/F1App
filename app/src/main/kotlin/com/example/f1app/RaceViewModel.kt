@@ -161,6 +161,7 @@ class RaceViewModel(
                 drivers = sortedPredictions,
                 dnfRisks = sortedDnfRisks,
                 driversChampionshipImpact = driversImpact.sortedBy { it.position },
+                constructorsChampionshipImpact = constructorsList,
                 isLoading = false
             )
         }

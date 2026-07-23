@@ -21,7 +21,8 @@ import com.example.f1app.utils.getFlagForMeeting
 fun HomeScreen(
     nextRace: Meeting?,
     onRacesClick: () -> Unit,
-    onNextRaceClick: (String) -> Unit
+    onNextRaceClick: (String) -> Unit,
+    onResultsClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -86,6 +87,14 @@ fun HomeScreen(
             onCardClick = onRacesClick
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        //Spacer(modifier = Modifier.height(4.dp))
+
+        SplitImageCard(
+            title = "Results",
+            imageDrawableId = R.drawable.img_drivers,
+            backgroundColor = Color.Black,
+            buttonColor = Color.Red,
+            onCardClick = onResultsClick
+        )
     }
 }

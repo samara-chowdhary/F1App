@@ -21,7 +21,7 @@ import com.example.f1app.ui.theme.F1Font
 @Composable
 fun ConstructorsChampionshipDropDownBox(
     title: String,
-    drivers: List<DriverStandingRow>
+    constructors: List<DriverStandingRow>
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -64,7 +64,7 @@ fun ConstructorsChampionshipDropDownBox(
                         .fillMaxWidth()
                         .background(Color(0xFF1A1A1A))
                 ) {
-                    drivers.forEach { driver ->
+                    constructors.forEach { constructor ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -74,22 +74,16 @@ fun ConstructorsChampionshipDropDownBox(
                         ) {
                             Column {
                                 Text(
-                                    text = "${driver.firstName} ${driver.lastName}",
+                                    text = constructor.team.ifEmpty { constructor.firstName },
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
                                     fontFamily = F1Font,
                                 )
-                                Text(
-                                    text = driver.team,
-                                    color = Color.LightGray,
-                                    fontSize = 12.sp,
-                                    fontFamily = F1Font
-                                )
                             }
 
                             Text(
-                                text = driver.value,
+                                text = constructor.value,
                                 color = Color.Red,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
@@ -104,4 +98,3 @@ fun ConstructorsChampionshipDropDownBox(
         }
     }
 }
-

@@ -40,7 +40,6 @@ import com.example.f1app.screens.IndividualResultsScreen
 import com.example.f1app.screens.RacesScreen
 import com.example.f1app.screens.ResultsScreen
 import com.example.f1app.screens.homeScreen.HomeViewModelFactory
-import com.example.f1app.ChampsViewModel
 import com.example.f1app.ui.theme.F1AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -134,7 +133,8 @@ fun F1AppApp() {
                         onRacesClick = { navController.navigate(AppDestinations.RACES.route) },
                         onNextRaceClick = { raceName ->
                             navController.navigate("race/$raceName/$raceName/$raceName")
-                        }
+                        },
+                        onResultsClick = { navController.navigate(AppDestinations.RESULTS.route )}
                     )
                 }
 

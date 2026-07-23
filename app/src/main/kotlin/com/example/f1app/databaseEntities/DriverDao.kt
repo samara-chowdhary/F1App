@@ -45,6 +45,8 @@ interface DriverDao {
     AND d.last_name = :lastName
     AND s.session_type = 'Race'
     AND m.year = (SELECT MAX(year) FROM MEETINGS)
+    AND sr.position IS NOT NULL
+    AND sr.position > 0
     AND s.session_key = (
         SELECT MAX(s2.session_key) 
         FROM sessions s2 
@@ -55,7 +57,6 @@ interface DriverDao {
     LIMIT 5
 """)
     suspend fun getRecentPositions(firstName: String, lastName: String): List<DriverPosition>
-
 
     @Query("""
     SELECT dp.team_name FROM DRIVER_PARTICIPATION dp

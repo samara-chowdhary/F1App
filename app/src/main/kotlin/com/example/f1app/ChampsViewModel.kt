@@ -15,7 +15,6 @@ class ChampsViewModel(
     val standings: StateFlow<List<DriverDao.ChampionshipRow>> = _standings
 
     private val _constructorStandings = MutableStateFlow(emptyList<DriverDao.ConstructorsChampionshipRow>())
-    // Expose this as constructorStandings (or constructorsStandings) to match your Screen
     val constructorStandings: StateFlow<List<DriverDao.ConstructorsChampionshipRow>> = _constructorStandings
 
     init {

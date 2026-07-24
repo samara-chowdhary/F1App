@@ -15,6 +15,15 @@ interface DriverDao {
     suspend fun getAllDrivers(): List<Driver>
 
     @Query("""
+    SELECT d.driver_number 
+    FROM drivers AS d 
+    WHERE LOWER(d.first_name) = LOWER(:firstName) 
+    AND LOWER(d.last_name) = LOWER(:lastName) 
+    LIMIT 1
+""")
+    suspend fun getDriverNumberByName(firstName: String, lastName: String): Int?
+
+    @Query("""
     SELECT sr.position AS position
     FROM session_result AS sr
     INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
@@ -41,22 +50,20 @@ interface DriverDao {
     INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
     INNER JOIN sessions AS s ON sr.session_key = s.session_key
     INNER JOIN MEETINGS AS m ON s.meeting_key = m.meeting_key
+    INNER JOIN DRIVER_PARTICIPATION AS dp ON dp.driver_number = sr.driver_number AND dp.session_key = sr.session_key
     WHERE d.first_name = :firstName
     AND d.last_name = :lastName
+    AND dp.team_name = :teamName
     AND s.session_type = 'Race'
-    AND m.year = (SELECT MAX(year) FROM MEETINGS)
-    AND sr.position IS NOT NULL
-    AND sr.position > 0
-    AND s.session_key = (
-        SELECT MAX(s2.session_key) 
-        FROM sessions s2 
-        WHERE s2.meeting_key = m.meeting_key 
-        AND s2.session_type = 'Race'
-    )
+    AND sr.position IS NOT NULL AND sr.position > 0
     ORDER BY m.date_start DESC
     LIMIT 5
 """)
-    suspend fun getRecentPositions(firstName: String, lastName: String): List<DriverPosition>
+    suspend fun getRecentPositionsForTeam(
+        firstName: String,
+        lastName: String,
+        teamName: String
+    ): List<DriverPosition>
 
     @Query("""
     SELECT dp.team_name FROM DRIVER_PARTICIPATION dp
@@ -66,7 +73,6 @@ interface DriverDao {
     LIMIT 1
 """)
     suspend fun getLatestTeamForDriver(driverNumber: Int): String?
-
 
     @Query("""
     SELECT DISTINCT d.* FROM drivers d
@@ -79,9 +85,7 @@ interface DriverDao {
     suspend fun getCurrentDrivers(): List<Driver>
 
     data class DnfResult(
-
         val dnf: Boolean
-
     )
 
     @Query("""
@@ -104,6 +108,7 @@ interface DriverDao {
     LIMIT 10
 """)
     suspend fun getRecentDNFs(firstName: String, lastName: String): List<DnfResult>
+
     @Query("""
     SELECT sr.position AS position
     FROM SESSION_RESULT sr
@@ -125,27 +130,6 @@ interface DriverDao {
       )
 """)
     suspend fun getWetRacePositions(firstName: String, lastName: String): List<DriverPosition>
-
-    @Query("""
-    SELECT sr.position AS position
-    FROM SESSION_RESULT sr
-    INNER JOIN drivers d ON sr.driver_number = d.driver_number
-    INNER JOIN sessions s ON sr.session_key = s.session_key
-    INNER JOIN WEATHER w ON s.session_key = w.session_key
-    WHERE d.first_name = :firstName
-      AND d.last_name = :lastName
-      AND s.session_type = 'Race'
-      AND w.rainfall = 0
-      AND s.session_key = (
-          SELECT MAX(s2.session_key)
-          FROM sessions s2
-          WHERE s2.meeting_key = (
-              SELECT s3.meeting_key FROM sessions s3 WHERE s3.session_key = s.session_key
-          )
-          AND s2.session_type = 'Race'
-      )
-""")
-    suspend fun getDryRacePositions(firstName: String, lastName: String): List<DriverPosition>
 
     @Query("""
     SELECT sr.dnf AS dnf
@@ -190,8 +174,8 @@ interface DriverDao {
     suspend fun getDryRaceDNFs(firstName: String, lastName: String): List<DnfResult>
 
     data class DriverPosition(
-    val position: Int
-)
+        val position: Int
+    )
 
     @Query("""
     SELECT d.first_name, d.last_name, sr.position, dp.team_name, sr.dnf
@@ -218,15 +202,16 @@ interface DriverDao {
     )
 
     @Query("""
-    SELECT d.first_name, d.last_name, dc.points_current, dc.position_current, dp.team_name
+    SELECT 
+        d.first_name AS first_name, 
+        d.last_name AS last_name, 
+        dc.points_current AS points_current,
+        dc.position_current AS position_current,
+        dp.team_name AS team_name
     FROM DRIVERS_CHAMPIONSHIP dc
     INNER JOIN drivers d ON dc.driver_number = d.driver_number
-    LEFT JOIN DRIVER_PARTICIPATION dp 
-    ON dc.driver_number = dp.driver_number
-    AND dp.session_key = (
-        SELECT MAX(session_key)
-        FROM DRIVER_PARTICIPATION
-    )
+    LEFT JOIN DRIVER_PARTICIPATION dp ON d.driver_number = dp.driver_number 
+        AND dp.session_key = dc.session_key
     WHERE dc.session_key = (
         SELECT MAX(session_key) FROM DRIVERS_CHAMPIONSHIP
     )

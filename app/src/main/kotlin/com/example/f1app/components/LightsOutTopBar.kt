@@ -13,14 +13,14 @@ fun LightsOutTopBar() {
         title = {
             Text(
                 text = "LightsOut",
-                color = Color(0xFFE53935), // Your brand red
+                color = Color.Red,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = F1Font
             )
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color(0xFF121212) // Dark background
+            containerColor = Color(0xFF121212)
         )
     )
 }

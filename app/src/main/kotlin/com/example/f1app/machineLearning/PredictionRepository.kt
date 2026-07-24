@@ -47,15 +47,26 @@ class PredictionRepository(val driverDao: DriverDao) {
         trackLocation: String,
         isWetRace: Boolean = false
     ): Double? {
+        val driverNumber = driverDao.getDriverNumberByName(firstName, lastName) ?: return 11.0
+        val currentTeam = driverDao.getLatestTeamForDriver(driverNumber) ?: ""
 
-        val recentRaw = if (isWetRace) {
+        var recentRaw = if (isWetRace) {
             driverDao.getWetRacePositions(firstName, lastName)
         } else {
-            driverDao.getRecentPositions(firstName, lastName)
+            driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam)
         }
+
+        if (isWetRace && recentRaw.isEmpty()) {
+            recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam)
+        }
+
         val recentPositions = removeAnomalies(recentRaw.map { it.position })
 
-        val trackRaw = driverDao.getHistoricalPositions(firstName, lastName, "%$trackLocation%")
+        val trackRaw = driverDao.getHistoricalPositions(
+            firstName,
+            lastName,
+            "%$trackLocation%",
+        )
         val trackPositions = removeAnomalies(trackRaw.map { it.position })
 
         if (recentPositions.isEmpty() && trackPositions.isEmpty()) return 11.0
@@ -97,14 +108,14 @@ class PredictionRepository(val driverDao: DriverDao) {
         val clusterAdj = getClusterAdjustment(recentPositions)
         var finalPrediction = basePrediction + clusterAdj
 
-        if (isWetRace) {
-            // Wet conditions increase volatility: good wet drivers scale up, lower confidence increases variance
-            val wetFactor = if (recentPositions.isNotEmpty() && recentPositions.average() <= 6.0) {
-                -0.8 // Top drivers in wet races get a slight boost (e.g. rain masters)
-            } else {
-                1.2  // Midfield/backmarkers face higher variance in wet conditions
+        if (isWetRace && recentPositions.isNotEmpty()) {
+            val avgPos = recentPositions.average()
+            val wetAdjustment = when {
+                avgPos <= 5.0 -> -0.5
+                avgPos <= 10.0 -> 0.2
+                else -> 0.6
             }
-            finalPrediction += wetFactor
+            finalPrediction += wetAdjustment
         }
 
         val currentStandings = driverDao.getCurrentDriversChampionship()
@@ -113,13 +124,15 @@ class PredictionRepository(val driverDao: DriverDao) {
                     it.lastName.equals(lastName, ignoreCase = true)
         }?.positionCurrent ?: 10
 
-        val minAllowed = (currentStandingPos - 6).coerceAtLeast(1)
-        val maxAllowed = (currentStandingPos + 6).coerceAtMost(20)
+        val minAllowed = (currentStandingPos - 4).coerceAtLeast(1)
+        val maxAllowed = (currentStandingPos + 4).coerceAtMost(20)
 
         val safePrediction = finalPrediction.coerceIn(minAllowed.toDouble(), maxAllowed.toDouble())
 
+
         return safePrediction
     }
+
     private fun getClusterAdjustment(positions: List<Int>): Double {
         if (positions.size < 3) return 0.0
 

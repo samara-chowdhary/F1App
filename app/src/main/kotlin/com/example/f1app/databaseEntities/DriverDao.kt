@@ -57,7 +57,7 @@ interface DriverDao {
     AND s.session_type = 'Race'
     AND sr.position IS NOT NULL AND sr.position > 0
     ORDER BY m.date_start DESC
-    LIMIT 5
+    LIMIT 10
 """)
     suspend fun getRecentPositionsForTeam(
         firstName: String,

@@ -53,6 +53,17 @@ class MainActivity : ComponentActivity() {
         val predictionRepo = PredictionRepository(database.driverDao())
 
         lifecycleScope.launch(Dispatchers.IO) {
+
+            try {
+                Log.d("IMPORT", "Starting import...")
+                val ingestor = DatabaseImport(this@MainActivity as Context)
+                ingestor.startImport()
+                Log.d("IMPORT", "Import finished")
+            } catch (e: Exception) {
+                Log.e("IMPORT", "Import failed", e)
+                e.printStackTrace()
+            }
+
             try {
                 val ingestor = DatabaseImport(this@MainActivity as Context)
                 ingestor.startImport()

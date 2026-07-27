@@ -1,6 +1,7 @@
 package com.example.f1app
 
 import android.content.Context
+import android.util.Log
 import com.example.f1app.databaseEntities.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.OkHttpClient
@@ -21,50 +22,73 @@ class DatabaseImport(private val context: Context) {
     }
 
     suspend fun startImport() {
-        println("Starting F1 Data Import...")
+        Log.d("IMPORT", "Starting live update for most recent race...")
 
         try {
-            // Sessions
-            val sessions = mapper.readValue(
-                fetch("https://api.openf1.org/v1/sessions"),
-                Array<Session>::class.java
-            ).toList()
-            db.sessionDao().insertAll(sessions)
-            println("Imported ${sessions.size} sessions")
+            // get the most recent race session only
+            val sessionsJson = fetch("https://api.openf1.org/v1/sessions?session_type=Race")
+            Log.d("IMPORT", "Sessions response length: ${sessionsJson.length}")
 
-            // Drivers
-            val drivers = mapper.readValue(
-                fetch("https://api.openf1.org/v1/drivers"),
-                Array<Driver>::class.java
-            ).toList()
-            val uniqueDrivers = drivers.distinctBy { it.driverNumber }
-            db.driverDao().insertAll(uniqueDrivers)
-            println("Imported ${uniqueDrivers.size} drivers")
+            val sessionsNode = mapper.readTree(sessionsJson)
+            Log.d("IMPORT", "Sessions node is array: ${sessionsNode.isArray}, size: ${sessionsNode.size()}")
 
-            // Driver Participation
-            val participations = drivers.map {
-                DriverParticipation(
-                    driverNumber = it.driverNumber,
-                    sessionKey = it.sessionKey ?: 0,
-                    teamName = it.teamName
-                )
+
+            if (!sessionsNode.isArray || sessionsNode.size() == 0) {
+                Log.d("IMPORT", "No sessions found")
+                return
             }
-            db.driverParticipationDao().insertAll(participations)
-            println("Imported ${participations.size} driver participations")
 
-            // Meetings
-            val meetings = mapper.readValue(
-                fetch("https://api.openf1.org/v1/meetings"),
-                Array<Meeting>::class.java
-            ).toList()
-            db.meetingDao().insertAll(meetings)
-            println("Imported ${meetings.size} meetings")
+            // find the most recent session by date_start
+            var latestSession: com.fasterxml.jackson.databind.JsonNode? = null
+            var latestDate = ""
+            sessionsNode.forEach { session ->
+                val dateStart = session.get("date_start")?.asText() ?: ""
+                if (dateStart > latestDate) {
+                    latestDate = dateStart
+                    latestSession = session
+                }
+            }
 
-            println("Import complete!")
+            val session = latestSession
+            if (session == null) {
+                Log.d("IMPORT", "Could not find latest session")
+                return
+            }
+
+            val sessionKey = session.get("session_key").asInt()
+            val meetingKey = session.get("meeting_key").asInt()
+            Log.d("IMPORT", "Latest race session_key: $sessionKey")
+
+            // fetch positions for that session only
+            val positionsJson = fetch("https://api.openf1.org/v1/position?session_key=$sessionKey")
+            val positionsNode = mapper.readTree(positionsJson)
+
+            if (positionsNode.isArray && positionsNode.size() > 0) {
+                val finalPositions = mutableMapOf<Int, Int>()
+                positionsNode.forEach { pos ->
+                    val driverNum = pos.get("driver_number")?.asInt()
+                    val position = pos.get("position")?.asInt()
+                    if (driverNum != null && position != null) {
+                        finalPositions[driverNum] = position
+                    }
+                }
+
+                finalPositions.forEach { (driverNum, pos) ->
+                    val result = SessionResult(
+                        sessionKey = sessionKey,
+                        driverNumber = driverNum,
+                        position = pos,
+                        meetingKey = meetingKey
+                    )
+                    db.driverDao().insertSessionResult(result)
+                }
+                Log.d("IMPORT", "Updated ${finalPositions.size} results for session $sessionKey")
+            } else {
+                Log.d("IMPORT", "No position data available yet for session $sessionKey")
+            }
 
         } catch (e: Exception) {
-            println("Import failed: ${e.message}")
-            e.printStackTrace()
+            Log.e("IMPORT", "Live update failed: ${e.message}", e)
         }
     }
 }

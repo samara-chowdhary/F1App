@@ -11,6 +11,9 @@ interface DriverDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(drivers: List<Driver>): List<Long>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSessionResult(result: SessionResult)
+
     @Query("SELECT * FROM drivers")
     suspend fun getAllDrivers(): List<Driver>
 

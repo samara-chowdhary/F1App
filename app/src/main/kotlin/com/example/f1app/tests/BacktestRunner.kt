@@ -114,7 +114,11 @@ suspend fun fetchDynamicTestCases(sessionKey: String): List<BacktestTestCase> {
             val result = resultsJson.getJSONObject(i)
             val driverNum = result.getInt("driver_number")
             val actualPos = result.optInt("position", 0)
-            val gridPos = result.optInt("grid_position", actualPos) // Fallback if missing
+            val gridPos = if (result.has("grid_position") && !result.isNull("grid_position")) {
+                result.getInt("grid_position")
+            } else {
+                result.optInt("position", 0)
+            }
 
             val names = driverMap[driverNum]
             if (names != null && actualPos > 0) {
@@ -134,4 +138,45 @@ suspend fun fetchDynamicTestCases(sessionKey: String): List<BacktestTestCase> {
     }
 
     return testCases
+}
+
+suspend fun runMultiSessionBacktest(
+    predictionRepo: PredictionRepository,
+    sessionKeys: List<String>
+): BacktestReport {
+    val allTestCases = mutableListOf<BacktestTestCase>()
+
+    //fetch test cases from every session
+    sessionKeys.forEach { sessionKey ->
+        Log.d("BACKTEST", "Fetching dynamic test cases for session: $sessionKey")
+        val cases = fetchDynamicTestCases(sessionKey)
+        allTestCases.addAll(cases)
+    }
+
+    Log.i("BACKTEST", "Total driver cases collected across ${sessionKeys.size} sessions: ${allTestCases.size}")
+
+    //runs the backtest across the combined data set
+    return runBacktestSuite(predictionRepo, allTestCases)
+}
+
+suspend fun fetchRaceSessionKeys(year: Int): List<String> {
+    val sessionKeys = mutableListOf<String>()
+
+    try {
+        // Query OpenF1 sessions endpoint for Race sessions in the specified year
+        val url = "https://api.openf1.org/v1/sessions?year=$year&session_name=Race"
+        val jsonArray = JSONArray(URL(url).readText())
+
+        for (i in 0 until jsonArray.length()) {
+            val sessionObj = jsonArray.getJSONObject(i)
+            val sessionKey = sessionObj.optString("session_key", "")
+            if (sessionKey.isNotEmpty()) {
+                sessionKeys.add(sessionKey)
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+
+    return sessionKeys
 }

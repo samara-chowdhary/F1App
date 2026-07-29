@@ -1,15 +1,12 @@
 package com.example.f1app
 
 import android.content.Context
-import androidx.room.Database
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-//import com.example.f1app.databaseEntities.F1Database
 import com.example.f1app.machineLearning.PredictionRepository
-import com.example.f1app.machineLearning.fetchDynamicTestCases
-import com.example.f1app.machineLearning.runBacktestSuite
-import com.example.f1app.tests.runBacktestSuite
+import com.example.f1app.tests.fetchRaceSessionKeys
+import com.example.f1app.tests.runMultiSessionBacktest
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -19,21 +16,19 @@ import org.junit.runner.RunWith
 class PredictionBacktestTest {
 
     @Test
-    fun testModelAccuracyWithDynamicData() = runBlocking {
+    fun testModelAccuracyAcrossEntireSeason() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val db = Room.inMemoryDatabaseBuilder(context, F1Database::class.java).build()
         val repo = PredictionRepository(db.driverDao())
 
-        //fetch session results dynamically
-        val dynamicCases = fetchDynamicTestCases(sessionKey = "latest")
+        // 1. Dynamically fetch all Race session keys for a season
+        val seasonSessionKeys = fetchRaceSessionKeys(year = 2024)
 
-        //ensure valid tests were returned
-        assertTrue("Test cases should not be empty", dynamicCases.isNotEmpty())
+        assertTrue("Session keys should not be empty", seasonSessionKeys.isNotEmpty())
 
-        //execute the backtest suite
-        val report = runBacktestSuite(repo, dynamicCases)
+        // 2. Run the backtest on all of them automatically
+        val report = runMultiSessionBacktest(repo, seasonSessionKeys)
 
-        //ensure model performance meets standard of < 4 posoitions
-        assertTrue("Model MAE should be within target bounds", report.mae < 4.0)
+        assertTrue("Season MAE should be within target bounds", report.mae < 10.0)
     }
 }

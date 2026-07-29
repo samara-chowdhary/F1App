@@ -37,6 +37,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND c.location LIKE :location
       AND s.session_type = 'Race'
+      AND s.date_start < :cutoffDate
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -45,10 +46,10 @@ interface DriverDao {
       )
     ORDER BY m.year ASC
 """)
-    suspend fun getHistoricalPositions(firstName: String, lastName: String, location: String): List<DriverPosition>
+    suspend fun getHistoricalPositions(firstName: String, lastName: String, location: String, cutoffDate: String?): List<DriverPosition>
 
     @Query("""
-    SELECT sr.position AS position
+    SELECT sr.position, s.date_start
     FROM session_result AS sr
     INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
     INNER JOIN sessions AS s ON sr.session_key = s.session_key
@@ -58,15 +59,18 @@ interface DriverDao {
     AND d.last_name = :lastName
     AND dp.team_name = :teamName
     AND s.session_type = 'Race'
+    AND s.date_start < :cutoffDate
+    AND s.session_key = (
+        SELECT MAX(s2.session_key)
+        FROM sessions s2
+        WHERE s2.meeting_key = m.meeting_key
+        AND s2.session_type = 'Race'
+    )
     AND sr.position IS NOT NULL AND sr.position > 0
     ORDER BY m.date_start DESC
     LIMIT 10
 """)
-    suspend fun getRecentPositionsForTeam(
-        firstName: String,
-        lastName: String,
-        teamName: String
-    ): List<DriverPosition>
+    suspend fun getRecentPositionsForTeam(firstName: String, lastName: String, teamName: String, cutoffDate: String?): List<DriverPosition>
 
     @Query("""
     SELECT dp.team_name FROM DRIVER_PARTICIPATION dp
@@ -99,6 +103,7 @@ interface DriverDao {
     WHERE d.first_name = :firstName
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
+      AND s.date_start < :cutOffDate
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -110,7 +115,7 @@ interface DriverDao {
     ORDER BY s.date_start DESC
     LIMIT 10
 """)
-    suspend fun getRecentDNFs(firstName: String, lastName: String): List<DnfResult>
+    suspend fun getRecentDNFs(firstName: String, lastName: String, cutOffDate: String): List<DnfResult>
 
     @Query("""
     SELECT sr.position AS position
@@ -122,6 +127,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall > 0
+      AND s.date_start < :cutoffDate
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -132,7 +138,7 @@ interface DriverDao {
           AND s2.session_type = 'Race'
       )
 """)
-    suspend fun getWetRacePositions(firstName: String, lastName: String): List<DriverPosition>
+    suspend fun getWetRacePositions(firstName: String, lastName: String, cutoffDate: String?): List<DriverPosition>
 
     @Query("""
     SELECT sr.dnf AS dnf
@@ -144,6 +150,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall > 0
+      AND s.date_start < :cutoffDate
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -153,7 +160,7 @@ interface DriverDao {
           AND s2.session_type = 'Race'
       )
 """)
-    suspend fun getWetRaceDNFs(firstName: String, lastName: String): List<DnfResult>
+    suspend fun getWetRaceDNFs(firstName: String, lastName: String, cutoffDate: String): List<DnfResult>
 
     @Query("""
     SELECT sr.dnf AS dnf
@@ -165,6 +172,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall = 0
+      AND s.date_start < :cutoffDate
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -174,7 +182,7 @@ interface DriverDao {
           AND s2.session_type = 'Race'
       )
 """)
-    suspend fun getDryRaceDNFs(firstName: String, lastName: String): List<DnfResult>
+    suspend fun getDryRaceDNFs(firstName: String, lastName: String, cutoffDate: String): List<DnfResult>
 
     data class DriverPosition(
         val position: Int
@@ -245,4 +253,5 @@ interface DriverDao {
         @ColumnInfo(name = "points_current") val pointsCurrent: Int,
         @ColumnInfo(name = "position_current") val positionCurrent: Int
     )
+
 }

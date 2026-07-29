@@ -71,21 +71,21 @@ class MainActivity : ComponentActivity() {
                 e.printStackTrace()
             }
 
-            val rawPositions = database.driverDao().getHistoricalPositions("Charles", "Leclerc", "%Barcelona%")
-            Log.d("PREDICTION", "Found ${rawPositions.size} historical positions: $rawPositions")
+            //val rawPositions = database.driverDao().getHistoricalPositions("Charles", "Leclerc", "%Barcelona%")
+            //Log.d("PREDICTION", "Found ${rawPositions.size} historical positions: $rawPositions")
 
-            val result = predictionRepo.predictNextPosition(
-                firstName = "Charles",
-                lastName = "Leclerc",
-                trackLocation = "Barcelona"
-            )
+            //val result = predictionRepo.predictNextPosition(
+               // firstName = "Charles",
+                //lastName = "Leclerc",
+               // trackLocation = "Barcelona"
+            //)
 
-            if (result != null) {
-                val rounded = Math.round(result).toInt()
-                Log.d("PREDICTION", "Predicted position: $rounded")
-            } else {
-                Log.d("PREDICTION", "Could not calculate prediction: No historical data found.")
-            }
+            //if (result != null) {
+             //   val rounded = Math.round(result).toInt()
+           //     Log.d("PREDICTION", "Predicted position: $rounded")
+            //} else {
+            //    Log.d("PREDICTION", "Could not calculate prediction: No historical data found.")
+           // }
         }
 
         setContent {

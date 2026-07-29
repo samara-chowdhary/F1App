@@ -13,7 +13,8 @@ data class BacktestTestCase(
     val lastName: String,
     val trackLocation: String,
     val gridPosition: Int,  //baseline comparison
-    val actualPosition: Int
+    val actualPosition: Int,
+    val cutoffDate: String
 )
 
 //data class to hold the results of the backtest
@@ -43,7 +44,8 @@ suspend fun runBacktestSuite(
         val predicted = predictionRepo.predictNextPosition(
             test.firstName,
             test.lastName,
-            test.trackLocation
+            test.trackLocation,
+            test.cutoffDate
         )
 
         if (predicted != null) {
@@ -128,7 +130,8 @@ suspend fun fetchDynamicTestCases(sessionKey: String): List<BacktestTestCase> {
                         lastName = names.second,
                         trackLocation = "Latest Session",
                         gridPosition = gridPos,
-                        actualPosition = actualPos
+                        actualPosition = actualPos,
+                        cutoffDate = String()
                     )
                 )
             }

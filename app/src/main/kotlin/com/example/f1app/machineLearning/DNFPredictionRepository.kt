@@ -4,11 +4,11 @@ import com.example.f1app.databaseEntities.DriverDao
 
 class DNFPredictionRepository(val driverDao: DriverDao) {
 
-    suspend fun predictDnfRisk(firstName: String, lastName: String, isWetRace: Boolean = false): String {
+    suspend fun predictDnfRisk(firstName: String, lastName: String, isWetRace: Boolean = false, cutOffDate: String): String {
         val dnfResults = if (isWetRace) {
-            driverDao.getWetRaceDNFs(firstName, lastName)
+            driverDao.getWetRaceDNFs(firstName, lastName, cutoffDate = String())
         } else {
-            driverDao.getRecentDNFs(firstName, lastName)
+            driverDao.getRecentDNFs(firstName, lastName, cutOffDate = String())
         }
 
         if (dnfResults.isEmpty()) return "Unknown"
@@ -33,8 +33,8 @@ class DNFPredictionRepository(val driverDao: DriverDao) {
     }
 
     suspend fun getWetWeatherDnfImpact(firstName: String, lastName: String): String {
-        val wetDnfs = driverDao.getWetRaceDNFs(firstName, lastName)
-        val dryDnfs = driverDao.getDryRaceDNFs(firstName, lastName)
+        val wetDnfs = driverDao.getWetRaceDNFs(firstName, lastName, cutoffDate = String())
+        val dryDnfs = driverDao.getDryRaceDNFs(firstName, lastName, cutoffDate = String())
 
         if (wetDnfs.isEmpty() || dryDnfs.isEmpty()) return "Not enough data"
 

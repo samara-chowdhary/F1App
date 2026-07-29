@@ -30,7 +30,7 @@ fun getPointsForPosition(position: Int): Int {
 
 class RaceViewModel(
     private val database: F1Database,
-    private val trackLocation: String
+    private val trackLocation: String,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DriverPredictionState())
@@ -52,6 +52,7 @@ class RaceViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
 
+            val raceDate: String? = database.sessionDao().getRaceDateByTrack(trackLocation)
             val predictionRepo = PredictionRepository(database.driverDao())
             val dnfRepo = DNFPredictionRepository(database.driverDao())
             val drivers = database.driverDao().getCurrentDrivers()
@@ -67,7 +68,9 @@ class RaceViewModel(
                         firstName = driver.firstName,
                         lastName = driver.lastName,
                         trackLocation = trackLocation,
-                        isWetRace = isWetRace
+                        isWetRace = isWetRace,
+                        cutoffDate = raceDate
+
                     )
 
                     if (prediction != null) {
@@ -86,7 +89,7 @@ class RaceViewModel(
                     }
 
 
-                    val dnfRisk = dnfRepo.predictDnfRisk(driver.firstName, driver.lastName, isWetRace)
+                    val dnfRisk = dnfRepo.predictDnfRisk(driver.firstName, driver.lastName, isWetRace, cutOffDate = String())
                     dnfRisks.add(
                         DriverStandingRow(0, driver.firstName, driver.lastName, team, dnfRisk)
                     )

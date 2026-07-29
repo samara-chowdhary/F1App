@@ -45,19 +45,20 @@ class PredictionRepository(val driverDao: DriverDao) {
         firstName: String,
         lastName: String,
         trackLocation: String,
+        cutoffDate: String?,
         isWetRace: Boolean = false
     ): Double? {
         val driverNumber = driverDao.getDriverNumberByName(firstName, lastName) ?: return 11.0
         val currentTeam = driverDao.getLatestTeamForDriver(driverNumber) ?: ""
 
         var recentRaw = if (isWetRace) {
-            driverDao.getWetRacePositions(firstName, lastName)
+            driverDao.getWetRacePositions(firstName, lastName, cutoffDate)
         } else {
-            driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam)
+            driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cutoffDate)
         }
 
         if (isWetRace && recentRaw.isEmpty()) {
-            recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam)
+            recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cutoffDate)
         }
 
         val recentPositions = removeAnomalies(recentRaw.map { it.position })
@@ -66,17 +67,32 @@ class PredictionRepository(val driverDao: DriverDao) {
             firstName,
             lastName,
             "%$trackLocation%",
+            cutoffDate
         )
         val trackPositions = removeAnomalies(trackRaw.map { it.position })
 
         if (recentPositions.isEmpty() && trackPositions.isEmpty()) return 11.0
+
+        fun calculateRecencyWeightedAverage(positions: List<Int>): Double {
+            if (positions.isEmpty()) return 11.0
+            var totalWeight = 0.0
+            var weightedSum = 0.0
+            positions.forEachIndexed { index, pos ->
+                val weight = 1.0 + (index * 0.25)
+                weightedSum += pos * weight
+                totalWeight += weight
+            }
+            return weightedSum / totalWeight
+        }
+
+        val weightedRecentAvg = calculateRecencyWeightedAverage(recentPositions)
 
         val trainedWeights = trainModelForDriver(recentPositions)
 
         val mlRecentPred: Double? = if (trainedWeights != null && recentPositions.size >= 2) {
             val (w, b) = trainedWeights
 
-            val avgPos = recentPositions.average()
+            val avgPos = weightedRecentAvg
             val lastPos = recentPositions.last().toDouble()
             val bestPos = recentPositions.minOrNull()?.toDouble() ?: avgPos
 
@@ -86,20 +102,20 @@ class PredictionRepository(val driverDao: DriverDao) {
             val scaledPred = normalizedPred * 20.0
 
             if (scaledPred.isNaN() || scaledPred.isInfinite()) {
-                recentPositions.average()
+                weightedRecentAvg
             } else {
                 scaledPred
             }
         } else if (recentPositions.isNotEmpty()) {
-            recentPositions.average()
+            weightedRecentAvg
         } else {
             null
         }
 
-        val trackAvg = if (trackPositions.isNotEmpty()) trackPositions.average() else null
+        val trackAvg = if (trackPositions.isNotEmpty()) calculateRecencyWeightedAverage(trackPositions) else null
 
         val basePrediction: Double = when {
-            mlRecentPred != null && trackAvg != null -> (mlRecentPred * 0.7) + (trackAvg * 0.3)
+            mlRecentPred != null && trackAvg != null -> (mlRecentPred * 0.75) + (trackAvg * 0.25)
             mlRecentPred != null -> mlRecentPred
             trackAvg != null -> trackAvg
             else -> 11.0
@@ -109,10 +125,9 @@ class PredictionRepository(val driverDao: DriverDao) {
         var finalPrediction = basePrediction + clusterAdj
 
         if (isWetRace && recentPositions.isNotEmpty()) {
-            val avgPos = recentPositions.average()
             val wetAdjustment = when {
-                avgPos <= 5.0 -> -0.5
-                avgPos <= 10.0 -> 0.2
+                weightedRecentAvg <= 5.0 -> -0.5
+                weightedRecentAvg <= 10.0 -> 0.2
                 else -> 0.6
             }
             finalPrediction += wetAdjustment
@@ -124,13 +139,13 @@ class PredictionRepository(val driverDao: DriverDao) {
                     it.lastName.equals(lastName, ignoreCase = true)
         }?.positionCurrent ?: 10
 
-        val minAllowed = (currentStandingPos - 4).coerceAtLeast(1)
-        val maxAllowed = (currentStandingPos + 4).coerceAtMost(20)
+        val minAllowed = (currentStandingPos - 6).coerceAtLeast(1)
+        val maxAllowed = (currentStandingPos + 6).coerceAtMost(20)
 
         val safePrediction = finalPrediction.coerceIn(minAllowed.toDouble(), maxAllowed.toDouble())
 
-
         return safePrediction
+
     }
 
     private fun getClusterAdjustment(positions: List<Int>): Double {

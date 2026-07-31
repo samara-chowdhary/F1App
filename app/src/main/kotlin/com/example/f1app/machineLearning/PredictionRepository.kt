@@ -71,7 +71,7 @@ class PredictionRepository(val driverDao: DriverDao) {
             recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, null, cleanCutoff)
         }
 
-        val recentPositions = recentRaw.map { it.position }
+        val recentPositions = removeAnomalies(recentRaw.map { it.position })
 
         // 3. Fetch track positions using the sanitized cutoff date
         val trackRaw = driverDao.getHistoricalPositions(

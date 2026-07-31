@@ -4,11 +4,16 @@ import com.example.f1app.databaseEntities.DriverDao
 
 class DNFPredictionRepository(val driverDao: DriverDao) {
 
-    suspend fun predictDnfRisk(firstName: String, lastName: String, isWetRace: Boolean = false, cutOffDate: String): String {
+    suspend fun predictDnfRisk(
+        firstName: String,
+        lastName: String,
+        isWetRace: Boolean = false,
+        cutOffDate: String?
+    ): String {
         val dnfResults = if (isWetRace) {
-            driverDao.getWetRaceDNFs(firstName, lastName, cutoffDate = String())
+            driverDao.getWetRaceDNFs(firstName, lastName, cutoffDate = cutOffDate)
         } else {
-            driverDao.getRecentDNFs(firstName, lastName, cutOffDate = String())
+            driverDao.getRecentDNFs(firstName, lastName, cutOffDate = cutOffDate)
         }
 
         if (dnfResults.isEmpty()) return "Unknown"
@@ -32,9 +37,13 @@ class DNFPredictionRepository(val driverDao: DriverDao) {
         }
     }
 
-    suspend fun getWetWeatherDnfImpact(firstName: String, lastName: String): String {
-        val wetDnfs = driverDao.getWetRaceDNFs(firstName, lastName, cutoffDate = String())
-        val dryDnfs = driverDao.getDryRaceDNFs(firstName, lastName, cutoffDate = String())
+    suspend fun getWetWeatherDnfImpact(
+        firstName: String,
+        lastName: String,
+        cutOffDate: String? = null
+    ): String {
+        val wetDnfs = driverDao.getWetRaceDNFs(firstName, lastName, cutoffDate = cutOffDate)
+        val dryDnfs = driverDao.getDryRaceDNFs(firstName, lastName, cutoffDate = cutOffDate)
 
         if (wetDnfs.isEmpty() || dryDnfs.isEmpty()) return "Not enough data"
 
@@ -54,5 +63,10 @@ class DNFPredictionRepository(val driverDao: DriverDao) {
             difference < -5.0 -> "${"%.0f".format(-difference)}% less likely to DNF in the wet"
             else -> "No significant difference in the wet"
         }
+    }
+
+    private fun predictProbability(weights: List<Double>, features: List<Double>, bias: Double): Double {
+        val z = weights.zip(features).sumOf { (w, x) -> w * x } + bias
+        return 1.0 / (1.0 + Math.exp(-z))
     }
 }

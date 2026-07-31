@@ -51,28 +51,49 @@ class PredictionRepository(val driverDao: DriverDao) {
         val driverNumber = driverDao.getDriverNumberByName(firstName, lastName) ?: return 11.0
         val currentTeam = driverDao.getLatestTeamForDriver(driverNumber) ?: ""
 
+        // 1. Sanitize the cutoff date (prevents literal string "null" from breaking SQL)
+        val cleanCutoff = if (cutoffDate == "null" || cutoffDate.isNullOrBlank()) null else cutoffDate
+
+        // 2. Fetch recent positions (with automatic fallback to any team if 0 rows returned)
         var recentRaw = if (isWetRace) {
-            driverDao.getWetRacePositions(firstName, lastName, cutoffDate)
+            driverDao.getWetRacePositions(firstName, lastName, cleanCutoff)
         } else {
-            driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cutoffDate)
+            driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cleanCutoff)
         }
 
+        // FALLBACK 1: If wet race query is empty, try team query
         if (isWetRace && recentRaw.isEmpty()) {
-            recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cutoffDate)
+            recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cleanCutoff)
         }
 
-        val recentPositions = removeAnomalies(recentRaw.map { it.position })
+        // FALLBACK 2: If team query returned 0 rows (e.g. driver changed teams), fetch across ANY team!
+        if (recentRaw.isEmpty()) {
+            recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, null, cleanCutoff)
+        }
 
+        val recentPositions = recentRaw.map { it.position }
+
+        // 3. Fetch track positions using the sanitized cutoff date
         val trackRaw = driverDao.getHistoricalPositions(
             firstName,
             lastName,
             "%$trackLocation%",
-            cutoffDate
+            cleanCutoff
         )
-        val trackPositions = removeAnomalies(trackRaw.map { it.position })
+        val trackPositions = trackRaw.map { it.position }
 
-        if (recentPositions.isEmpty() && trackPositions.isEmpty()) return 11.0
+        // Log the fetched data for debugging
+        Log.d("PRED_DEBUG", "Driver: $firstName $lastName (#$driverNumber) | Team: '$currentTeam' | Cutoff: '$cleanCutoff'")
+        Log.d("PRED_DEBUG", "Recent Positions Count: ${recentPositions.size} | Data: $recentPositions")
+        Log.d("PRED_DEBUG", "Track Positions Count: ${trackPositions.size} | Data: $trackPositions")
 
+        // Safety fallback if both queries return empty lists
+        if (recentPositions.isEmpty() && trackPositions.isEmpty()) {
+            Log.e("PRED_DEBUG", "❌ BOTH recent and track positions are EMPTY -> returning 11.0")
+            return 11.0
+        }
+
+        // --- Rest of your weighted average & machine learning math remains the same ---
         fun calculateRecencyWeightedAverage(positions: List<Int>): Double {
             if (positions.isEmpty()) return 11.0
             var totalWeight = 0.0
@@ -86,18 +107,15 @@ class PredictionRepository(val driverDao: DriverDao) {
         }
 
         val weightedRecentAvg = calculateRecencyWeightedAverage(recentPositions)
-
         val trainedWeights = trainModelForDriver(recentPositions)
 
         val mlRecentPred: Double? = if (trainedWeights != null && recentPositions.size >= 2) {
             val (w, b) = trainedWeights
-
             val avgPos = weightedRecentAvg
             val lastPos = recentPositions.last().toDouble()
             val bestPos = recentPositions.minOrNull()?.toDouble() ?: avgPos
 
             val features = listOf(avgPos / 20.0, lastPos / 20.0, bestPos / 20.0)
-
             val normalizedPred = predict(features, w, b)
             val scaledPred = normalizedPred * 20.0
 
@@ -142,10 +160,7 @@ class PredictionRepository(val driverDao: DriverDao) {
         val minAllowed = (currentStandingPos - 6).coerceAtLeast(1)
         val maxAllowed = (currentStandingPos + 6).coerceAtMost(20)
 
-        val safePrediction = finalPrediction.coerceIn(minAllowed.toDouble(), maxAllowed.toDouble())
-
-        return safePrediction
-
+        return finalPrediction.coerceIn(minAllowed.toDouble(), maxAllowed.toDouble())
     }
 
     private fun getClusterAdjustment(positions: List<Int>): Double {
@@ -261,4 +276,7 @@ class PredictionRepository(val driverDao: DriverDao) {
 
         return if (filtered.size < 2) positions else filtered
     }
+
+
+
 }

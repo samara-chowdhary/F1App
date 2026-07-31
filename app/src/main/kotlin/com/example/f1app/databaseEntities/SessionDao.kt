@@ -48,14 +48,17 @@ interface SessionDao {
         val location: String?,
         @ColumnInfo(name = "circuit_short_name") val circuitShortName: String?
     )
-
     @Query("""
     SELECT s.date_start 
     FROM SESSIONS s
     INNER JOIN MEETINGS m ON s.meeting_key = m.meeting_key
     INNER JOIN CIRCUITS c ON m.circuit_key = c.circuit_key
-    WHERE c.location = :trackLocation 
-    AND s.session_type = 'Race' 
+    WHERE (c.location LIKE '%' || :trackLocation || '%' 
+       OR c.circuit_short_name LIKE '%' || :trackLocation || '%'
+       OR m.meeting_name LIKE '%' || :trackLocation || '%')
+      AND s.session_type = 'Race'
+      AND s.date_start IS NOT NULL
+    ORDER BY s.date_start DESC
     LIMIT 1
 """)
     suspend fun getRaceDateByTrack(trackLocation: String): String?

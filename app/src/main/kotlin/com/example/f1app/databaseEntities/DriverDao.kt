@@ -37,7 +37,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND c.location LIKE :location
       AND s.session_type = 'Race'
-      AND s.date_start < :cutoffDate
+      AND date(s.date_start) < date(:cutoffDate)
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -54,12 +54,12 @@ interface DriverDao {
     INNER JOIN drivers AS d ON sr.driver_number = d.driver_number
     INNER JOIN sessions AS s ON sr.session_key = s.session_key
     INNER JOIN MEETINGS AS m ON s.meeting_key = m.meeting_key
-    INNER JOIN DRIVER_PARTICIPATION AS dp ON dp.driver_number = sr.driver_number AND dp.session_key = sr.session_key
-    WHERE d.first_name = :firstName
-    AND d.last_name = :lastName
-    AND dp.team_name = :teamName
+    LEFT JOIN DRIVER_PARTICIPATION AS dp ON dp.driver_number = sr.driver_number AND dp.session_key = sr.session_key
+    WHERE TRIM(LOWER(d.first_name)) = TRIM(LOWER(:firstName))
+    AND TRIM(LOWER(d.last_name)) = TRIM(LOWER(:lastName))
+    AND (:teamName IS NULL OR :teamName = '' OR LOWER(dp.team_name) LIKE '%' || LOWER(:teamName) || '%')
     AND s.session_type = 'Race'
-    AND s.date_start < :cutoffDate
+    AND (:cutoffDate IS NULL OR :cutoffDate = '' OR date(s.date_start) < date(:cutoffDate))
     AND s.session_key = (
         SELECT MAX(s2.session_key)
         FROM sessions s2
@@ -70,7 +70,13 @@ interface DriverDao {
     ORDER BY m.date_start DESC
     LIMIT 10
 """)
-    suspend fun getRecentPositionsForTeam(firstName: String, lastName: String, teamName: String, cutoffDate: String?): List<DriverPosition>
+    suspend fun getRecentPositionsForTeam(
+        firstName: String,
+        lastName: String,
+        teamName: String?,
+        cutoffDate: String?
+    ): List<DriverPosition>
+
 
     @Query("""
     SELECT dp.team_name FROM DRIVER_PARTICIPATION dp
@@ -103,7 +109,7 @@ interface DriverDao {
     WHERE d.first_name = :firstName
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
-      AND s.date_start < :cutOffDate
+      AND date(s.date_start) < date(:cutOffDate)
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -115,7 +121,7 @@ interface DriverDao {
     ORDER BY s.date_start DESC
     LIMIT 10
 """)
-    suspend fun getRecentDNFs(firstName: String, lastName: String, cutOffDate: String): List<DnfResult>
+    suspend fun getRecentDNFs(firstName: String, lastName: String, cutOffDate: String?): List<DnfResult>
 
     @Query("""
     SELECT sr.position AS position
@@ -127,7 +133,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall > 0
-      AND s.date_start < :cutoffDate
+      AND date(s.date_start) < date(:cutoffDate)
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -150,7 +156,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall > 0
-      AND s.date_start < :cutoffDate
+      AND date(s.date_start) < date(:cutoffDate)
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -160,7 +166,7 @@ interface DriverDao {
           AND s2.session_type = 'Race'
       )
 """)
-    suspend fun getWetRaceDNFs(firstName: String, lastName: String, cutoffDate: String): List<DnfResult>
+    suspend fun getWetRaceDNFs(firstName: String, lastName: String, cutoffDate: String?): List<DnfResult>
 
     @Query("""
     SELECT sr.dnf AS dnf
@@ -172,7 +178,7 @@ interface DriverDao {
       AND d.last_name = :lastName
       AND s.session_type = 'Race'
       AND w.rainfall = 0
-      AND s.date_start < :cutoffDate
+      AND date(s.date_start) < date(:cutoffDate)
       AND s.session_key = (
           SELECT MAX(s2.session_key)
           FROM sessions s2
@@ -182,7 +188,7 @@ interface DriverDao {
           AND s2.session_type = 'Race'
       )
 """)
-    suspend fun getDryRaceDNFs(firstName: String, lastName: String, cutoffDate: String): List<DnfResult>
+    suspend fun getDryRaceDNFs(firstName: String, lastName: String, cutoffDate: String?): List<DnfResult>
 
     data class DriverPosition(
         val position: Int

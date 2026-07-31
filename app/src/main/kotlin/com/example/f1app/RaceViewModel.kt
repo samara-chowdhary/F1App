@@ -52,7 +52,10 @@ class RaceViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
 
-            val raceDate: String? = database.sessionDao().getRaceDateByTrack(trackLocation)
+            // Fetch race date and ensure it isn't "null" string
+            val rawRaceDate: String? = database.sessionDao().getRaceDateByTrack(trackLocation)
+            val cleanCutoffDate = if (rawRaceDate == "null" || rawRaceDate.isNullOrBlank()) null else rawRaceDate
+
             val predictionRepo = PredictionRepository(database.driverDao())
             val dnfRepo = DNFPredictionRepository(database.driverDao())
             val drivers = database.driverDao().getCurrentDrivers()
@@ -61,37 +64,45 @@ class RaceViewModel(
             val dnfRisks = mutableListOf<DriverStandingRow>()
 
             drivers.forEach { driver ->
-                if (driver.firstName != null && driver.lastName != null) {
+                val fName = driver.firstName?.trim()
+                val lName = driver.lastName?.trim()
+
+                if (!fName.isNullOrEmpty() && !lName.isNullOrEmpty()) {
                     val team = database.driverParticipationDao().getLatestTeamForDriver(driver.driverNumber) ?: "Unknown"
 
                     val prediction = predictionRepo.predictNextPosition(
-                        firstName = driver.firstName,
-                        lastName = driver.lastName,
+                        firstName = fName,
+                        lastName = lName,
                         trackLocation = trackLocation,
                         isWetRace = isWetRace,
-                        cutoffDate = raceDate
-
+                        cutoffDate = cleanCutoffDate
                     )
 
                     if (prediction != null) {
                         val bracket = predictionRepo.getPredictionBracket(prediction)
                         val value = "P${Math.round(prediction)} · $bracket"
-                        Log.d("PRED_DEBUG", "${driver.firstName} ${driver.lastName}: $value")
+                        Log.d("PRED_DEBUG", "$fName $lName: $value")
                         predictions.add(
                             DriverStandingRow(
                                 position = 0,
-                                firstName = driver.firstName,
-                                lastName = driver.lastName,
+                                firstName = fName,
+                                lastName = lName,
                                 team = team,
-                                value = "P${Math.round(prediction)} · $bracket"
+                                value = value
                             )
                         )
                     }
 
+                    // FIX: Pass cleanCutoffDate instead of String()
+                    val dnfRisk = dnfRepo.predictDnfRisk(
+                        firstName = fName,
+                        lastName = lName,
+                        isWetRace = isWetRace,
+                        cutOffDate = cleanCutoffDate
+                    )
 
-                    val dnfRisk = dnfRepo.predictDnfRisk(driver.firstName, driver.lastName, isWetRace, cutOffDate = String())
                     dnfRisks.add(
-                        DriverStandingRow(0, driver.firstName, driver.lastName, team, dnfRisk)
+                        DriverStandingRow(0, fName, lName, team, dnfRisk)
                     )
                 }
             }
@@ -118,14 +129,14 @@ class RaceViewModel(
             val driversImpact = mutableListOf<DriverStandingRow>()
             val constructorsImpact = mutableMapOf<String, Int>() // team -> points gained
 
-
             sortedPredictions.forEach { prediction ->
                 val predictedPos = prediction.value.substringAfter("P")
                     .substringBefore(" ")
                     .toIntOrNull() ?: 0
                 val pointsGained = getPointsForPosition(predictedPos)
                 val current = currentStandings.find {
-                    it.firstName == prediction.firstName && it.lastName == prediction.lastName
+                    it.firstName.equals(prediction.firstName, ignoreCase = true) &&
+                            it.lastName.equals(prediction.lastName, ignoreCase = true)
                 }
                 val currentPoints = current?.pointsCurrent ?: 0
                 val newPoints = currentPoints + pointsGained
@@ -148,7 +159,7 @@ class RaceViewModel(
 
             // build constructors impact list
             val constructorsList = constructorsImpact.map { (team, pointsGained) ->
-                val current = currentConstructors.find { it.teamName == team }
+                val current = currentConstructors.find { it.teamName.equals(team, ignoreCase = true) }
                 val currentPoints = current?.pointsCurrent ?: 0
                 DriverStandingRow(
                     position = current?.positionCurrent ?: 0,

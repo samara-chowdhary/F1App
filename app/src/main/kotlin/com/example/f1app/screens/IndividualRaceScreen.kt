@@ -44,7 +44,6 @@ fun IndividualRaceScreen(
         )
     )
     val state by viewModel.state.collectAsState()
-    val isWetRace by viewModel.isWetRace.collectAsState()
 
     Scaffold(
         topBar = {
@@ -93,32 +92,6 @@ fun IndividualRaceScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Wet Race",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = F1Font,
-                    fontSize = 16.sp
-                )
-                Switch(
-                    checked = isWetRace,
-                    onCheckedChange = { viewModel.toggleWetRace(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFFE10600)
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             if (state.isLoading) {
                 CircularProgressIndicator(color = Color(0xFFE10600), modifier = Modifier.padding(32.dp))
             } else {
@@ -135,7 +108,6 @@ fun IndividualRaceScreen(
                     title = "Constructors' Championship",
                     constructors = state.constructorsChampionshipImpact,
                 )
-
             }
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -13,8 +13,6 @@ import kotlinx.coroutines.launch
 data class DriverPredictionState(
     val drivers: List<DriverStandingRow> = emptyList(),
     val dnfRisks: List<DriverStandingRow> = emptyList(),
-    val wetPositionImpact: List<DriverStandingRow> = emptyList(),
-    val wetDnfImpact: List<DriverStandingRow> = emptyList(),
     val driversChampionshipImpact: List<DriverStandingRow> = emptyList(),
     val constructorsChampionshipImpact: List<DriverStandingRow> = emptyList(),
     val isLoading: Boolean = true
@@ -36,19 +34,11 @@ class RaceViewModel(
     private val _state = MutableStateFlow(DriverPredictionState())
     val state: StateFlow<DriverPredictionState> = _state
 
-    private val _isWetRace = MutableStateFlow(false)
-    val isWetRace: StateFlow<Boolean> = _isWetRace
-
     init {
-        loadPredictions(false)
+        loadPredictions()
     }
 
-    fun toggleWetRace(isWet: Boolean) {
-        _isWetRace.value = isWet
-        loadPredictions(isWet)
-    }
-
-    private fun loadPredictions(isWetRace: Boolean) {
+    private fun loadPredictions() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
 
@@ -74,7 +64,6 @@ class RaceViewModel(
                         firstName = fName,
                         lastName = lName,
                         trackLocation = trackLocation,
-                        isWetRace = isWetRace,
                         cutoffDate = cleanCutoffDate
                     )
 
@@ -93,11 +82,9 @@ class RaceViewModel(
                         )
                     }
 
-                    // FIX: Pass cleanCutoffDate instead of String()
                     val dnfRisk = dnfRepo.predictDnfRisk(
                         firstName = fName,
                         lastName = lName,
-                        isWetRace = isWetRace,
                         cutOffDate = cleanCutoffDate
                     )
 

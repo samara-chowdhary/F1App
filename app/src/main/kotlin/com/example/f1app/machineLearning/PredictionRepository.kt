@@ -45,8 +45,7 @@ class PredictionRepository(val driverDao: DriverDao) {
         firstName: String,
         lastName: String,
         trackLocation: String,
-        cutoffDate: String?,
-        isWetRace: Boolean = false
+        cutoffDate: String?
     ): Double? {
         val driverNumber = driverDao.getDriverNumberByName(firstName, lastName) ?: return 11.0
         val currentTeam = driverDao.getLatestTeamForDriver(driverNumber) ?: ""
@@ -55,18 +54,9 @@ class PredictionRepository(val driverDao: DriverDao) {
         val cleanCutoff = if (cutoffDate == "null" || cutoffDate.isNullOrBlank()) null else cutoffDate
 
         // 2. Fetch recent positions (with automatic fallback to any team if 0 rows returned)
-        var recentRaw = if (isWetRace) {
-            driverDao.getWetRacePositions(firstName, lastName, cleanCutoff)
-        } else {
-            driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cleanCutoff)
-        }
+        var recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cleanCutoff)
 
-        // FALLBACK 1: If wet race query is empty, try team query
-        if (isWetRace && recentRaw.isEmpty()) {
-            recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, currentTeam, cleanCutoff)
-        }
-
-        // FALLBACK 2: If team query returned 0 rows (e.g. driver changed teams), fetch across ANY team!
+        // FALLBACK: If team query returned 0 rows (e.g. driver changed teams), fetch across ANY team!
         if (recentRaw.isEmpty()) {
             recentRaw = driverDao.getRecentPositionsForTeam(firstName, lastName, null, cleanCutoff)
         }
@@ -93,7 +83,6 @@ class PredictionRepository(val driverDao: DriverDao) {
             return 11.0
         }
 
-        // --- Rest of your weighted average & machine learning math remains the same ---
         fun calculateRecencyWeightedAverage(positions: List<Int>): Double {
             if (positions.isEmpty()) return 11.0
             var totalWeight = 0.0
@@ -140,16 +129,7 @@ class PredictionRepository(val driverDao: DriverDao) {
         }
 
         val clusterAdj = getClusterAdjustment(recentPositions)
-        var finalPrediction = basePrediction + clusterAdj
-
-        if (isWetRace && recentPositions.isNotEmpty()) {
-            val wetAdjustment = when {
-                weightedRecentAvg <= 5.0 -> -0.5
-                weightedRecentAvg <= 10.0 -> 0.2
-                else -> 0.6
-            }
-            finalPrediction += wetAdjustment
-        }
+        val finalPrediction = basePrediction + clusterAdj
 
         val currentStandings = driverDao.getCurrentDriversChampionship()
         val currentStandingPos = currentStandings.find {
@@ -276,7 +256,5 @@ class PredictionRepository(val driverDao: DriverDao) {
 
         return if (filtered.size < 2) positions else filtered
     }
-
-
 
 }

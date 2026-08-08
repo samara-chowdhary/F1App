@@ -4,31 +4,35 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.f1app.machineLearning.PredictionRepository
+import com.example.f1app.machineLearning.DNFPredictionRepository
 import com.example.f1app.tests.fetchRaceSessionKeys
-import com.example.f1app.tests.runMultiSessionBacktest
+import com.example.f1app.tests.runDnfMultiSessionBacktest
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class PredictionBacktestTest {
+class DnfPredictionBacktestTest {
 
     @Test
-    fun testModelAccuracyAcrossEntireSeason() = runBlocking {
+    fun testDnfModelAccuracyAcrossEntireSeason() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val db = Room.inMemoryDatabaseBuilder(context, F1Database::class.java).build()
-        val repo = PredictionRepository(db.driverDao())
+        val repo = DNFPredictionRepository(db.driverDao())
 
-        //Dynamically fetch all Race session keys for a season
+        // Dynamically fetch all Race session keys for a season
         val seasonSessionKeys = fetchRaceSessionKeys(year = 2024)
 
         assertTrue("Session keys should not be empty", seasonSessionKeys.isNotEmpty())
 
-        //Run the backtest on all of them automatically
-        val report = runMultiSessionBacktest(repo, seasonSessionKeys)
+        // Run the DNF backtest on all sessions automatically
+        val report = runDnfMultiSessionBacktest(repo, seasonSessionKeys)
 
-        assertTrue("Season MAE should be within target bounds", report.mae < 10.0)
+        // Check that DNF prediction accuracy is within the target bounds
+        assertTrue(
+            "DNF prediction accuracy should be at least 70%",
+            report.accuracyPercentage >= 0.70
+        )
     }
 }
